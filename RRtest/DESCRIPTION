@@ -1,0 +1,12 @@
+Package: RRtest
+Type: Package
+Title: Rick Reijnders's Miscellaneous Functions
+Version: 0.0.0.1000
+Authors@R: person("Rick", "Reijnders", email = "Rick.Reijnders@home.nl", role = c("aut", "cre"))
+Description: Contains many functions useful for data analysis, high-level graphics, utility operations, and other functions.
+License: GPL (>= 3)
+Depends: R (>= 3.5.0)
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.0
+Imports: ggplot2, ggfortify
