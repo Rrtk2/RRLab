@@ -7,8 +7,15 @@ The RRtest package was created as a personal package, filled with tools to help 
 
 
 #### Installation
-TBA
+First, you need to install the devtools package. You can do this from CRAN.
+```
+install.packages("devtools")
+```
 
+To install the RRtest package
+```
+devtools::install_github("Rrtk2/RRtest/RRtest")
+```
 
 #### Contact
 ra.reijnders@maastrichtuniversity.nl
