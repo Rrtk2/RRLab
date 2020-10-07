@@ -12,7 +12,10 @@ KDEA(
   s_k = floor(sqrt(dim(dataset)[1])),
   s_pvalTH = 0.05,
   s_AmountSignTH = floor(s_k * 0.75),
-  s_logFCTH = 1
+  s_logFCTH = 1,
+  s_CovFormula = NA,
+  s_CovOfImportance = NA,
+  s_Verbose = TRUE
 )
 }
 \arguments{
@@ -31,6 +34,12 @@ KDEA(
 \item{s_AmountSignTH}{Amount of times found to be significant throughout all folds threshold (integer).}
 
 \item{s_logFCTH}{Minimum logFC required threshold (float).}
+
+\item{s_CovFormula}{Defaults to "~Class"; can be changed, however, the column entered in f_dataset_class_column_id is called class, and in formula should be treated so. Example: in iris the function can be run using KDEA(iris,5). The fifth column ("species") will be renamed to "Class" therefore the formula should be "~Class" and not "~Species". Other columns keep their names, therefore "~Class+Sepal.Width" is possible. This function extracts the 1st term from the formula, this is set by s_CovOfImportance, which can be changed appropriately.}
+
+\item{s_CovOfImportance}{Automatically searches the correct "Class" column, usally 1; This is the column which is extracted after running limma::topTable. When s_CovFormula = NA then the first column is the LogFC column. When edited to eg "~Class+Sepal.Width", the first column is the "Class" FC and the second column is the effect of "Sepal.Width". Make sure this matches.}
+
+\item{s_Verbose}{Show more info if TRUE (default)}
 }
 \value{
 A list of imporant features, a dataframe of ranked features, the plot, and indermediate results.
@@ -43,5 +52,5 @@ is applied to get estimates of variability in DEA, then by selecting the most ro
 improved follow-up analysis is possible.
 }
 \examples{
-KDEA(mtcars,which(colnames(mtcars)=="am"))
+KDEA(dataset = mtcars,f_dataset_class_column_id = which(colnames(mtcars)=="am"),s_CovFormula = "~Class + gear")
 }
