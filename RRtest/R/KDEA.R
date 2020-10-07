@@ -9,7 +9,7 @@
 #' @param dataset Input the dataset object (row=sample; col=feature; 'class' column required).
 #' @param f_dataset_class_column_id Index number of class column (eg. for iris dataset classcolumn ID is 5 (species)).
 #' @param s_omitNA Remove NAs from data.
-#' @param s_partitionlength Percentage number used in resampling (0-1).
+#' @param s_partitionlength Percentage number used in resampling (0-1) (default 0.5).
 #' @param s_k Amount of folds (auto generated based on sqrt(sampleNo).
 #' @param s_pvalTH Significance threshold.
 #' @param s_AmountSignTH Amount of times found to be significant throughout all folds threshold (integer).
@@ -24,7 +24,7 @@
 #' KDEA(dataset = mtcars,f_dataset_class_column_id = which(colnames(mtcars)=="am"),s_CovFormula = "~Class + gear")
 #' @export
 
-KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_omitNA = TRUE, s_partitionlength = 0.8, s_k = floor(sqrt(dim(dataset)[1])), s_pvalTH = 0.05, s_AmountSignTH = floor(s_k*0.75), s_logFCTH=1, s_CovFormula = NA, s_CovOfImportance = NA, s_Verbose=TRUE) {
+KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_omitNA = TRUE, s_partitionlength = 0.5, s_k = floor(sqrt(dim(dataset)[1])), s_pvalTH = 0.05, s_AmountSignTH = floor(s_k*0.3), s_logFCTH=0.5, s_CovFormula = NA, s_CovOfImportance = NA, s_Verbose=TRUE) {
 
 #-----------------------------------------------------------------------------------------------------#
 #							checks
@@ -93,6 +93,13 @@ res_super = list()
 res_logFC = data.frame(Feature=colnames(dataset)[1:((dim(dataset)[2])-1)])
 res_Pval = data.frame(Feature=colnames(dataset)[1:((dim(dataset)[2])-1)])
 CounterOneTimeOnly = 0
+
+if(is.na(s_CovFormula)){
+# switch to intercept design, because other was not appropiate...
+	s_CovFormula = "~Class"
+}
+		
+		
 # start fold loop
 for( i in 1:s_k){
 
@@ -118,12 +125,7 @@ for( i in 1:s_k){
 	# colnames(temp_design) <- c("Group1","Group2")
 
 	# Make contrasts based on "~Class" or used defined
-	if(is.na(s_CovFormula)){
-	# switch to intercept design, because other was not appropiate...
-		temp_design <- model.matrix(~Class, data = dataset[Trainindex,])
-		}else{
-		temp_design <- model.matrix(as.formula(s_CovFormula), data = dataset[Trainindex,])
-	}
+	temp_design <- model.matrix(as.formula(s_CovFormula), data = dataset[Trainindex,])
 
 	# Create a linear model based on the groups
 	temp_fit <- limma::lmFit(t(dataset[Trainindex,-f_dataset_class_column_id]), temp_design)
@@ -134,20 +136,27 @@ for( i in 1:s_k){
 	# extract results
 	temp_results = limma::topTable(temp_fit, adjust="BH",num=Inf)
 	
-	# Check if the focus is shifted to "Class" or to another covariate; print these results.
-	if(!is.na(s_CovOfImportance)){
+
+	# Check if the focus unchanged, than find the "Class" column.
+	if(is.na(s_CovOfImportance)){
+		if(s_CovFormula=="~Class"){
+			s_CovOfImportance = which(names(temp_results)=="logFC")
+			}else{
+			s_CovOfImportance = which(names(temp_results)=="Class")
+			if(is.na(s_CovOfImportance[1])){
+				s_CovOfImportance=1
+				cat(paste0("s_CovOfImportance is FORCED to: ",s_CovOfImportance,"\n","This results in cov: ",names(temp_results)[s_CovOfImportance],"\n","ALERT: \nPlease consider setting the s_CovOfImportance","\n"))
+			}
+		}
+		CounterOneTimeOnly = 1
+	}else{
+		# Check if the focus is shifted to "Class" or to another covariate; print these results.
 		if(CounterOneTimeOnly==0){
 			if(s_Verbose){
 				cat(paste0("s_CovOfImportance is set to: ",s_CovOfImportance,"\n","This results in cov: ",names(temp_results)[s_CovOfImportance],"\n"))
 			}
 			CounterOneTimeOnly = 1
 		}
-	}
-	
-	# Check if the focus unchanged, than find the "Class" column.
-	if(is.na(s_CovOfImportance)){
-		s_CovOfImportance = which(names(temp_results)=="Class")
-		CounterOneTimeOnly = 1
 	}
 	
 	# Store all results of fold [i] into super object using predefined structure
@@ -255,7 +264,7 @@ df$Pval = round(df$Pval,1)
 			aes(x = names, y = FC, fill = Pval)
 		)+
 		ggplot2::scale_y_continuous(
-			breaks = seq(-ceiling(max(abs(df_f$FC))),ceiling(max(abs(df_f$FC))),(ceiling(max(abs(df_f$FC)))/10)),
+			breaks = seq(-ceiling(max(abs(df_f$FC))),ceiling(max(abs(df_f$FC))),(ceiling(max(abs(df_f$FC)))/3)),
 			limits = c(-ceiling(max(abs(df_f$FC))*10)/10, ceiling(max(abs(df_f$FC))*10)/10), expand =  c(0.01, 0.01)
 		)+
 		ggplot2::ggtitle(paste0("Robust features using ",names(temp_results)[s_CovOfImportance],"\n",s_CovFormula,"\n")
