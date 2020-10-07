@@ -14,15 +14,17 @@
 #' @param s_pvalTH Significance threshold.
 #' @param s_AmountSignTH Amount of times found to be significant throughout all folds threshold (integer).
 #' @param s_logFCTH Minimum logFC required threshold (float).
+#' @param s_CovFormula Defaults to "~Class"; can be changed, however, the column entered in f_dataset_class_column_id is called class, and in formula should be treated so. Example: in iris the function can be run using KDEA(iris,5). The fifth column ("species") will be renamed to "Class" therefore the formula should be "~Class" and not "~Species". Other columns keep their names, therefore "~Class+Sepal.Width" is possible. This function extracts the 1st term from the formula, this is set by s_CovOfImportance, which can be changed appropriately. 
+#' @param s_CovOfImportance Automatically searches the correct "Class" column, usally 1; This is the column which is extracted after running limma::topTable. When s_CovFormula = NA then the first column is the LogFC column. When edited to eg "~Class+Sepal.Width", the first column is the "Class" FC and the second column is the effect of "Sepal.Width". Make sure this matches.
+#' @param s_Verbose Show more info if TRUE (default)
 #'
 #' @return A list of imporant features, a dataframe of ranked features, the plot, and indermediate results.
 #' @importFrom magrittr "%>%"
 #' @examples
-#' KDEA(mtcars,which(colnames(mtcars)=="am"))
+#' KDEA(dataset = mtcars,f_dataset_class_column_id = which(colnames(mtcars)=="am"),s_CovFormula = "~Class + gear")
 #' @export
 
-
-KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_omitNA = TRUE, s_partitionlength = 0.8, s_k = floor(sqrt(dim(dataset)[1])), s_pvalTH = 0.05, s_AmountSignTH = floor(s_k*0.75), s_logFCTH=1) {
+KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_omitNA = TRUE, s_partitionlength = 0.8, s_k = floor(sqrt(dim(dataset)[1])), s_pvalTH = 0.05, s_AmountSignTH = floor(s_k*0.75), s_logFCTH=1, s_CovFormula = NA, s_CovOfImportance = NA, s_Verbose=TRUE) {
 
 #-----------------------------------------------------------------------------------------------------#
 #							checks
@@ -45,13 +47,15 @@ s_AmountSignTH = min(s_AmountSignTH,s_k)
 #							Print settings
 #-----------------------------------------------------------------------------------------------------#
 
-cat(paste0("Starting KDEA using:\n"))
-cat(paste0("Resamplefraction: ",s_partitionlength ,"\n"))
-cat(paste0("Folds: ",s_k ,"\n"))
-cat(paste0("Pval TH: ",s_pvalTH ,"\n"))
-cat(paste0("LogFC TH: ",s_logFCTH ,"\n"))
-cat(paste0("Amount Sign TH: ",s_AmountSignTH ,"\n"))
-
+if(s_Verbose){
+	cat(paste0("Starting KDEA using:\n"))
+	cat(paste0("Using formula: ",if(is.na(s_CovFormula)){"~Class"}else{s_CovFormula} ,"\n"))
+	cat(paste0("Resamplefraction: ",s_partitionlength ,"\n"))
+	cat(paste0("Folds: ",s_k ,"\n"))
+	cat(paste0("Pval TH: ",s_pvalTH ,"\n"))
+	cat(paste0("LogFC TH: ",s_logFCTH ,"\n"))
+	cat(paste0("Amount Sign TH: ",s_AmountSignTH ,"\n"))
+}
 
 #-----------------------------------------------------------------------------------------------------#
 #							NAs + numeric
@@ -81,13 +85,14 @@ Class = as.factor(as.character(dataset[,f_dataset_class_column_id]))
 
 
 #-----------------------------------------------------------------------------------------------------#
-#							INITIAL DATA SPLITTING
+#							INITIAL DATA SPLITTING/RANDOMISATION
 #-----------------------------------------------------------------------------------------------------#
 set.seed(42)
 FoldSamples = caret::createDataPartition(Class, p = s_partitionlength, list = FALSE, times = s_k)
 res_super = list()
 res_logFC = data.frame(Feature=colnames(dataset)[1:((dim(dataset)[2])-1)])
 res_Pval = data.frame(Feature=colnames(dataset)[1:((dim(dataset)[2])-1)])
+CounterOneTimeOnly = 0
 # start fold loop
 for( i in 1:s_k){
 
@@ -112,20 +117,46 @@ for( i in 1:s_k){
 	# temp_design <- model.matrix(~0+ Group, data = relevantAnnotationOrdered)
 	# colnames(temp_design) <- c("Group1","Group2")
 
+	# Make contrasts based on "~Class" or used defined
+	if(is.na(s_CovFormula)){
 	# switch to intercept design, because other was not appropiate...
-	temp_design <- model.matrix(~Class, data = dataset[Trainindex,])
-
+		temp_design <- model.matrix(~Class, data = dataset[Trainindex,])
+		}else{
+		temp_design <- model.matrix(as.formula(s_CovFormula), data = dataset[Trainindex,])
+	}
 
 	# Create a linear model based on the groups
 	temp_fit <- limma::lmFit(t(dataset[Trainindex,-f_dataset_class_column_id]), temp_design)
 
+	# Emperical bayes
 	temp_fit <- limma::eBayes(temp_fit)
 	
+	# extract results
 	temp_results = limma::topTable(temp_fit, adjust="BH",num=Inf)
 	
-	res_super[[i]] = data.frame(names = rownames(temp_results),FC = temp_results$logFC, Pval = temp_results$P.Value,stringsAsFactors=FALSE)
-	res_logFC[,(i+1)] = as.numeric(temp_results$logFC[match(as.character(res_logFC$Feature),x=rownames(temp_results))])
+	# Check if the focus is shifted to "Class" or to another covariate; print these results.
+	if(!is.na(s_CovOfImportance)){
+		if(CounterOneTimeOnly==0){
+			if(s_Verbose){
+				cat(paste0("s_CovOfImportance is set to: ",s_CovOfImportance,"\n","This results in cov: ",names(temp_results)[s_CovOfImportance],"\n"))
+			}
+			CounterOneTimeOnly = 1
+		}
+	}
 	
+	# Check if the focus unchanged, than find the "Class" column.
+	if(is.na(s_CovOfImportance)){
+		s_CovOfImportance = which(names(temp_results)=="Class")
+		CounterOneTimeOnly = 1
+	}
+	
+	# Store all results of fold [i] into super object using predefined structure
+	res_super[[i]] = data.frame(names = rownames(temp_results),FC = temp_results[,s_CovOfImportance], Pval = temp_results$P.Value,stringsAsFactors=FALSE)
+	
+	# Store only logFC results of fold [i] into super object using predefined structure
+	res_logFC[,(i+1)] = as.numeric(temp_results[match(as.character(res_logFC$Feature),x=rownames(temp_results)),s_CovOfImportance])
+	
+	# Store only Pvalue results of fold [i] into super object using predefined structure
 	res_Pval[,(i+1)] = as.numeric(temp_results$P.Value[match(as.character(res_Pval$Feature),x=rownames(temp_results))])
 
 }
@@ -134,12 +165,15 @@ for( i in 1:s_k){
 #							process dataframe
 #-----------------------------------------------------------------------------------------------------#
 
+# Format the predefined structure, rownames = featurenames
 rownames(res_logFC) = res_logFC$Feature
 res_logFC = res_logFC[,-1]
 
+# Format the predefined structure, rownames = featurenames
 rownames(res_Pval) = res_Pval$Feature
 res_Pval = res_Pval[,-1]
 
+# Calulate some metrics on LogFC
 for( i in 1:(dim(res_logFC)[1])){
 	res_logFC[i,"Median"] = median(as.numeric(res_logFC[i,1:s_k]))
 	res_logFC[i,"SD"] = sd(as.numeric(res_logFC[i,1:s_k]))
@@ -148,6 +182,7 @@ for( i in 1:(dim(res_logFC)[1])){
 	res_logFC[i,"max"] = max(as.numeric(res_logFC[i,1:s_k]))
 }
 
+# Calulate some metrics on Pvalue
 for( i in 1:(dim(res_Pval)[1])){
 	res_Pval[i,"Median"] = median(as.numeric(res_Pval[i,1:s_k]))
 	res_Pval[i,"mean"] = mean(as.numeric(res_Pval[i,1:s_k]))
@@ -160,6 +195,7 @@ for( i in 1:(dim(res_Pval)[1])){
 #-----------------------------------------------------------------------------------------------------#
 #							RANKS
 #-----------------------------------------------------------------------------------------------------#
+# Calculate the amount of times to be observed significant, 
 RankValue_Pval = rank(-res_Pval[,"AmountSign"] , ties.method ="max")
 RankValue_Pval = RankValue_Pval/max(abs(RankValue_Pval))
 
@@ -222,6 +258,8 @@ df$Pval = round(df$Pval,1)
 			breaks = seq(-ceiling(max(abs(df_f$FC))),ceiling(max(abs(df_f$FC))),(ceiling(max(abs(df_f$FC)))/10)),
 			limits = c(-ceiling(max(abs(df_f$FC))*10)/10, ceiling(max(abs(df_f$FC))*10)/10), expand =  c(0.01, 0.01)
 		)+
+		ggplot2::ggtitle(paste0("Robust features using ",names(temp_results)[s_CovOfImportance],"\n",s_CovFormula,"\n")
+		)+
 		#scale_color_manual(
 		#	name="-log10(P-value)",
 		#)+
@@ -279,7 +317,23 @@ df$Pval = round(df$Pval,1)
 		
 		res_plotfeatures = unique((df_f[,1]))
 		
-		out=list(Rankobject = RankedOrderedData, Plot=Plot, PlotFeatues = res_plotfeatures, res_super = res_super)
+		
+		#-----------------------------------------------------------------------------------------------------#
+		#							Get all metrics (settings)
+		#-----------------------------------------------------------------------------------------------------#
+		# gather all settings and dump in var for reproducebility
+		allSettings  = ls(pattern="^s_")
+		temp = data.frame(Setting = allSettings, Value=NA)
+		for(o in 1:length(allSettings)){
+			tempset = allSettings[o]
+			tempval = get(tempset)
+			#temp[o,1] = tempset
+			temp[o,2] = tempval
+		}
+		s_settings = temp
+		rm(temp)
+		
+		out=list(Rankobject = RankedOrderedData, Plot=Plot, PlotFeatues = res_plotfeatures, res_super = res_super, formula = s_CovFormula, settings = s_settings)
 		print(Plot)
 		return(out)
 	}
