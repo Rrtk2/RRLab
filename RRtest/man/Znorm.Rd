@@ -8,6 +8,8 @@ Znorm(X, NormalizePerRow = TRUE)
 }
 \arguments{
 \item{X}{Object that should be normalized.}
+
+\item{NormalizePerRow}{Normalize per row if TRUE, per column if FALSE}
 }
 \value{
 Normalized object

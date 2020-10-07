@@ -8,11 +8,11 @@ KDEA(
   dataset = NA,
   f_dataset_class_column_id = NA,
   s_omitNA = TRUE,
-  s_partitionlength = 0.8,
+  s_partitionlength = 0.5,
   s_k = floor(sqrt(dim(dataset)[1])),
   s_pvalTH = 0.05,
-  s_AmountSignTH = floor(s_k * 0.75),
-  s_logFCTH = 1,
+  s_AmountSignTH = floor(s_k * 0.3),
+  s_logFCTH = 0.5,
   s_CovFormula = NA,
   s_CovOfImportance = NA,
   s_Verbose = TRUE
@@ -25,7 +25,7 @@ KDEA(
 
 \item{s_omitNA}{Remove NAs from data.}
 
-\item{s_partitionlength}{Percentage number used in resampling (0-1).}
+\item{s_partitionlength}{Percentage number used in resampling (0-1) (default 0.5).}
 
 \item{s_k}{Amount of folds (auto generated based on sqrt(sampleNo).}
 

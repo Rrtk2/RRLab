@@ -3,7 +3,7 @@
 #' This function performs Z-score normalisation on input. Dataframe input will be processed per row.
 #'
 #' @param X Object that should be normalized.
-#' @NormalizePerRow Normalize per row if TRUE, per column if FALSE
+#' @param NormalizePerRow Normalize per row if TRUE, per column if FALSE
 #' 
 #' @return Normalized object
 #' @examples
