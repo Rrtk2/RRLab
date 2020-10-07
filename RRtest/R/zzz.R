@@ -1,7 +1,7 @@
 .onAttach <- function(libname, pkgname) {
 
 	# Welcome message
-	packageStartupMessage("Welcome to the RRtest package!")
+	packageStartupMessage(cat("Welcome to the RRtest package! \nPlease help me improve at GitHub(RRtk2/RRtest)!"))
 	
 	# Set packages
 	s_requiredpackages = c("ggplot2","ggfortify","matlib","fitdistrplus","caret","limma","tidyverse","ggsci","showtext") #,"parallel"
