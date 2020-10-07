@@ -1,8 +1,7 @@
-#### KDEA (K-fold Differential Expression Analysis)
+### KDEA (K-fold Differential Expression Analysis)
 This algorithm randomly resamples the original dataset using only 80% of all samples for K folds. Each fold is processed using limma, Pvalues and LogFC is generated and stored. Median LogFC and amount of significant ocurrences are ranked and combined to a combined rank. An image is generated indicative of the variation and significance based on the collective DEA results. The Ranked features are resulted and the robust features from the image are resulted in a list.
 
-[See the example and results](/docs/KDEA.md) 
-
+#### Running example
 An example using the diamonds dataset, trying to estimate the best robust features for the "cut" labels (column 2, filtered on "Ideal" and "Fair" only)
 ```
 # from tibble to dataframe
@@ -21,6 +20,7 @@ data_diamond = data_diamond[,-c(3,4)]
 KDEA(dataset = data_diamond,f_dataset_class_column_id = 2,s_k = 10)
 ```
 
+#### Results
 This results in:
 
 ```
@@ -175,5 +175,8 @@ This image indicated that between the groups "Fair" and "Ideal", price is the bi
 [ ![Diamond](/docs/diamond.png)](/docs/diamond.png) 
 
 When evaluating the results it can be seen in the figure above that they are critical measures in the appearance of a diamond. The size of the diamond and price are the biggest difference when comparing the catagories "Fair" and "Ideal". 
+
+#### Roadmap
+[ ![KDEA workflow](/docs/KDEA-roadmap.png)](/docs/KDEA-roadmap.png) 
 
 
