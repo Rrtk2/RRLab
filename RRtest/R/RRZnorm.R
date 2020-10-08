@@ -1,4 +1,4 @@
-#' Znorm
+#' RRZnorm
 #'
 #' This function performs Z-score normalisation on input. Dataframe input will be processed per row.
 #'
@@ -10,7 +10,7 @@
 #' Znorm(iris[,-5])
 #' @export
 
-Znorm = function(X,NormalizePerRow=TRUE){
+RRZnorm = function(X,NormalizePerRow=TRUE){
 
 	if(class(X)=="integer"){
 		Z = X - mean(X)
