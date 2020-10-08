@@ -51,7 +51,7 @@ A list of imporant features, a dataframe of ranked features, the plot, and inder
 K-fold Differential Expression Analysis (KDEA)
 Purpose:
 Repeated random-sampled Limma analysis is applied to get estimates of variability in DEA, then by selecting the most robust features,
-improved follow-up analysis is possible.
+improved follow-up analysis is possible. Please see details for required dataset structure!
 }
 \details{
 Dataset:
