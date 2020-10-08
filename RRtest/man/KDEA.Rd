@@ -7,12 +7,13 @@
 KDEA(
   dataset = NA,
   f_dataset_class_column_id = NA,
+  s_PhenoDataFrame = NA,
   s_omitNA = TRUE,
   s_partitionlength = 0.5,
   s_k = floor(sqrt(dim(dataset)[1])),
   s_pvalTH = 0.05,
   s_AmountSignTH = floor(s_k * 0.3),
-  s_logFCTH = 0.5,
+  s_logFCTH = NA,
   s_CovFormula = NA,
   s_CovOfImportance = NA,
   s_Verbose = TRUE
@@ -21,7 +22,9 @@ KDEA(
 \arguments{
 \item{dataset}{Input the dataset object (row=sample; col=feature; 'class' column required).}
 
-\item{f_dataset_class_column_id}{Index number of class column (eg. for iris dataset classcolumn ID is 5 (species)).}
+\item{f_dataset_class_column_id}{Index number of class column (eg. for iris dataset classcolumn ID is 5 (species)). Can be added to s_PhenoDataFrame.}
+
+\item{s_PhenoDataFrame}{This is a dataframe containing the phenotypic observations, rows as samples, columns as features. Make sure one of columns has exact identifiers found in rownames(dataset)}
 
 \item{s_omitNA}{Remove NAs from data.}
 
@@ -46,11 +49,24 @@ A list of imporant features, a dataframe of ranked features, the plot, and inder
 }
 \description{
 K-fold Differential Expression Analysis (KDEA)
-This function required a dataset with rows as samples and columns as features.
-It should contain a "class" column to be able to detect classes. repeated random-sampled Limma analysis 
-is applied to get estimates of variability in DEA, then by selecting the most robust features,
+Purpose:
+Repeated random-sampled Limma analysis is applied to get estimates of variability in DEA, then by selecting the most robust features,
 improved follow-up analysis is possible.
 }
+\details{
+Dataset:
+Requires a dataset with rows as samples and columns as features.
+Rownames should contain the unique identifier of the samples.
+It should contain a "Class" column to be able to detect classes. (OR use phenotypic data Classes)
+
+Phenotypic data:
+Can be added to account for covariates using formula.
+Requires rows as samples and columns as features.
+Should contain a column with unique identifiers of the samples.
+It should contain a "Class" column to be able to detect classes. (OR use dataset Classes)
+}
 \examples{
-KDEA(dataset = mtcars,f_dataset_class_column_id = which(colnames(mtcars)=="am"),s_CovFormula = "~Class + gear")
+KDEA(dataset = dataset, s_PhenoDataFrame = Phenotipic_data, s_CovFormula = "~Class + age + sex")
+KDEA(dataset = mtcars, f_dataset_class_column_id = which(colnames(mtcars)=="am"), s_CovFormula = "~Class + gear")
+KDEA(dataset = iris, f_dataset_class_column_id = 5, s_CovOfImportance = 1)
 }

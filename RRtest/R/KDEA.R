@@ -1,13 +1,24 @@
 #' KDEA
 #'
 #' K-fold Differential Expression Analysis (KDEA)
-#' This function required a dataset with rows as samples and columns as features.
-#' It should contain a "class" column to be able to detect classes. repeated random-sampled Limma analysis 
-#' is applied to get estimates of variability in DEA, then by selecting the most robust features,
+#' Purpose:
+#' Repeated random-sampled Limma analysis is applied to get estimates of variability in DEA, then by selecting the most robust features,
 #' improved follow-up analysis is possible.
 #'
+#' Dataset:
+#' Requires a dataset with rows as samples and columns as features.
+#' Rownames should contain the unique identifier of the samples.
+#' It should contain a "Class" column to be able to detect classes. (OR use phenotypic data Classes)
+#'
+#' Phenotypic data:
+#' Can be added to account for covariates using formula.
+#' Requires rows as samples and columns as features.
+#' Should contain a column with unique identifiers of the samples.
+#' It should contain a "Class" column to be able to detect classes. (OR use dataset Classes)
+#'
 #' @param dataset Input the dataset object (row=sample; col=feature; 'class' column required).
-#' @param f_dataset_class_column_id Index number of class column (eg. for iris dataset classcolumn ID is 5 (species)).
+#' @param f_dataset_class_column_id Index number of class column (eg. for iris dataset classcolumn ID is 5 (species)). Can be added to s_PhenoDataFrame.
+#' @param s_PhenoDataFrame This is a dataframe containing the phenotypic observations, rows as samples, columns as features. Make sure one of columns has exact identifiers found in rownames(dataset)
 #' @param s_omitNA Remove NAs from data.
 #' @param s_partitionlength Percentage number used in resampling (0-1) (default 0.5).
 #' @param s_k Amount of folds (auto generated based on sqrt(sampleNo).
@@ -21,10 +32,12 @@
 #' @return A list of imporant features, a dataframe of ranked features, the plot, and indermediate results.
 #' @importFrom magrittr "%>%"
 #' @examples
-#' KDEA(dataset = mtcars,f_dataset_class_column_id = which(colnames(mtcars)=="am"),s_CovFormula = "~Class + gear")
+#' KDEA(dataset = dataset, s_PhenoDataFrame = Phenotipic_data, s_CovFormula = "~Class + age + sex")
+#' KDEA(dataset = mtcars, f_dataset_class_column_id = which(colnames(mtcars)=="am"), s_CovFormula = "~Class + gear")
+#' KDEA(dataset = iris, f_dataset_class_column_id = 5, s_CovOfImportance = 1)
 #' @export
 
-KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_omitNA = TRUE, s_partitionlength = 0.5, s_k = floor(sqrt(dim(dataset)[1])), s_pvalTH = 0.05, s_AmountSignTH = floor(s_k*0.3), s_logFCTH=0.5, s_CovFormula = NA, s_CovOfImportance = NA, s_Verbose=TRUE) {
+KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_PhenoDataFrame = NA,s_omitNA = TRUE, s_partitionlength = 0.5, s_k = floor(sqrt(dim(dataset)[1])), s_pvalTH = 0.05, s_AmountSignTH = floor(s_k*0.3), s_logFCTH=NA, s_CovFormula = NA, s_CovOfImportance = NA, s_Verbose=TRUE) {
 
 #-----------------------------------------------------------------------------------------------------#
 #							checks
@@ -33,7 +46,42 @@ KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_omitNA = TRUE, s
 # if(is.na(dataset)){stop("Please enter dataset")}
 
 # it cannot be more significant (number of times) than the amount of folds
-s_AmountSignTH = min(s_AmountSignTH,s_k)
+s_AmountSignTH = min(s_AmountSignTH,s_k)-1
+
+# check if phenotypic dataframe is added
+if(!is.null(dim(s_PhenoDataFrame)[1])){
+	cat(paste0("Using phenotypic dataframe for Class and covariates (if needed):\nMake sure rownames(dataset) and rownames(s_PhenoDataFrame) use the same identifiers!!"))
+	
+	# test if dataframe
+	if(!is.data.frame(s_PhenoDataFrame)){
+		#cat(paste0("Please check if s_PhenoDataFrame is a data.frame!\n"))
+		stop("Please check if s_PhenoDataFrame is a data.frame!\n")
+	}
+	
+	if(!"Class"%in%colnames(s_PhenoDataFrame)){
+		stop("No 'Class' found in colnames s_PhenoDataFrame")
+	}
+	
+	#SampleOrder = match(rownames(dataset), rownames(s_PhenoDataFrame))[!is.na(match(rownames(dataset), rownames(s_PhenoDataFrame)))]
+	#s_PhenoDataFrame = s_PhenoDataFrame[SampleOrder,]
+	#
+	#SampleOrder2 = match(rownames(s_PhenoDataFrame), rownames(dataset))[!is.na(match(rownames(s_PhenoDataFrame), rownames(dataset)))]
+	
+	
+	# get the linking column between dataset and pheno
+	IdNameColInPhenoDF = names(which(lapply(s_PhenoDataFrame,FUN = function(X){sum(as.character(rownames(dataset))%in%as.character(X))})>0)[1])
+	
+	# Select data based on phenotype order.
+	relevantPhenoDFOrder = as.numeric(match(as.character(rownames(dataset)),x=as.character(s_PhenoDataFrame[[IdNameColInPhenoDF]])))
+	dataset = dataset[relevantPhenoDFOrder,]
+	
+	if(sum(colnames(dataset)=="Class")==1){
+		dataset$Class = s_PhenoDataFrame$Class
+		}else{
+		dataset = data.frame(dataset, Class = s_PhenoDataFrame$Class)
+	}
+
+}
 
 ## packages
 #library(ggfortify)
@@ -53,7 +101,7 @@ if(s_Verbose){
 	cat(paste0("Resamplefraction: ",s_partitionlength ,"\n"))
 	cat(paste0("Folds: ",s_k ,"\n"))
 	cat(paste0("Pval TH: ",s_pvalTH ,"\n"))
-	cat(paste0("LogFC TH: ",s_logFCTH ,"\n"))
+	#cat(paste0("LogFC TH: ",s_logFCTH ,"\n")) # automated now
 	cat(paste0("Amount Sign TH: ",s_AmountSignTH ,"\n"))
 }
 
@@ -125,7 +173,19 @@ for( i in 1:s_k){
 	# colnames(temp_design) <- c("Group1","Group2")
 
 	# Make contrasts based on "~Class" or used defined
-	temp_design <- model.matrix(as.formula(s_CovFormula), data = dataset[Trainindex,])
+	# if a pheno DF os given:
+	if(!is.null(dim(s_PhenoDataFrame)[1])){
+		dataset
+	
+		s_PhenoDataFrame
+	
+		temp_design <- model.matrix(as.formula(s_CovFormula), data = s_PhenoDataFrame[Trainindex,])
+		
+		
+		
+		}else{
+		temp_design <- model.matrix(as.formula(s_CovFormula), data = dataset[Trainindex,])
+	}
 
 	# Create a linear model based on the groups
 	temp_fit <- limma::lmFit(t(dataset[Trainindex,-f_dataset_class_column_id]), temp_design)
@@ -240,6 +300,11 @@ df$Pval = round(df$Pval,1)
 	# at least (unlikly)
 	df_f = df[df$Pval>-log10(s_pvalTH),]  
 	
+	
+	if(is.na(s_logFCTH)){
+		s_logFCTH = quantile(abs(df_f$FC),0.5)
+	}
+	
 	# minimal logFC
 	df_f = df_f[abs(df_f$FC)>s_logFCTH,]  
 		 
@@ -264,7 +329,7 @@ df$Pval = round(df$Pval,1)
 			aes(x = names, y = FC, fill = Pval)
 		)+
 		ggplot2::scale_y_continuous(
-			breaks = seq(-ceiling(max(abs(df_f$FC))),ceiling(max(abs(df_f$FC))),(ceiling(max(abs(df_f$FC)))/3)),
+			breaks = round(seq(-ceiling(max(abs(df_f$FC))),ceiling(max(abs(df_f$FC))),(ceiling(max(abs(df_f$FC)))/3)),2),
 			limits = c(-ceiling(max(abs(df_f$FC))*10)/10, ceiling(max(abs(df_f$FC))*10)/10), expand =  c(0.01, 0.01)
 		)+
 		ggplot2::ggtitle(paste0("Robust features using ",names(temp_results)[s_CovOfImportance],"\n",s_CovFormula,"\n")
@@ -332,9 +397,12 @@ df$Pval = round(df$Pval,1)
 		#-----------------------------------------------------------------------------------------------------#
 		# gather all settings and dump in var for reproducebility
 		allSettings  = ls(pattern="^s_")
+		s_settings = NA
 		temp = data.frame(Setting = allSettings, Value=NA)
 		for(o in 1:length(allSettings)){
+			if(allSettings[o]=="s_PhenoDataFrame"){next} # skip for now @RRR
 			tempset = allSettings[o]
+			tempval = NA
 			tempval = get(tempset)
 			#temp[o,1] = tempset
 			temp[o,2] = tempval
