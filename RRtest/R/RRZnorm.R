@@ -2,42 +2,40 @@
 #'
 #' This function performs Z-score normalisation on input. Dataframe input will be processed per row.
 #'
-#' @param X Object that should be normalized.
+#' @param Dataset Object that should be normalized.
 #' @param NormalizePerRow Normalize per row if TRUE, per column if FALSE
 #' 
 #' @return Normalized object
 #' @examples
-#' Znorm(iris[,-5])
+#' NormObject = Znorm(iris[,-5])
 #' @export
 
-RRZnorm = function(X,NormalizePerRow=TRUE){
+RRZnorm = function(Dataset,NormalizePerRow=TRUE){
 
-	if(class(X)=="integer"){
-		Z = X - mean(X)
-		Y = Z / sd(X)
-		return(Y)
+	if(class(Dataset)=="integer"){
+		Z = Dataset - mean(Dataset)
+		Dataset = Z / sd(Dataset)
 	}
-	if(class(X)=="data.frame"){
+	if(class(Dataset)=="data.frame"){
 			
 		if(NormalizePerRow){
-			for(i in 1:(dim(X)[1])){
-				X2 = as.numeric(X[i,])
-				Z = X2 - mean(X2)
-				temp_Zvalue = Z / sd(X2)
+			for(i in 1:(dim(Dataset)[1])){
+				Dataset2 = as.numeric(Dataset[i,])
+				Z = Dataset2 - mean(Dataset2)
+				temp_Zvalue = Z / sd(Dataset2)
 
-				X[i,] = temp_Zvalue
-				
+				Dataset[i,] = temp_Zvalue
 			}
 		}else{
-			for(i in 1:(dim(X)[2])){
-				X2 = as.numeric(X[,i])
-				Z = X2 - mean(X2)
-				temp_Zvalue = Z / sd(X2)
+			for(i in 1:(dim(Dataset)[2])){
+				Dataset2 = as.numeric(Dataset[,i])
+				Z = Dataset2 - mean(Dataset2)
+				temp_Zvalue = Z / sd(Dataset2)
 
-				X[,i] = temp_Zvalue
+				Dataset[,i] = temp_Zvalue
 				
 			}
 		}
-		return(X)
 	}
+	return(Dataset)
 }

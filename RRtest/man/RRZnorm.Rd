@@ -4,10 +4,10 @@
 \alias{RRZnorm}
 \title{RRZnorm}
 \usage{
-RRZnorm(X, NormalizePerRow = TRUE)
+RRZnorm(Dataset, NormalizePerRow = TRUE)
 }
 \arguments{
-\item{X}{Object that should be normalized.}
+\item{Dataset}{Object that should be normalized.}
 
 \item{NormalizePerRow}{Normalize per row if TRUE, per column if FALSE}
 }
@@ -18,5 +18,5 @@ Normalized object
 This function performs Z-score normalisation on input. Dataframe input will be processed per row.
 }
 \examples{
-Znorm(iris[,-5])
+NormObject = Znorm(iris[,-5])
 }
