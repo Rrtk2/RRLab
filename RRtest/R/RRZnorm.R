@@ -12,11 +12,13 @@
 
 RRZnorm = function(Dataset,NormalizePerRow=TRUE){
 
-	if(class(Dataset)=="integer"){
+	if(!class(Dataset)=="data.frame"){
 		Z = Dataset - mean(Dataset)
-		Dataset = Z / sd(Dataset)
+		out = Z / sd(Dataset)
+		#return(out)
 	}
 	if(class(Dataset)=="data.frame"){
+		out = Dataset
 			
 		if(NormalizePerRow){
 			for(i in 1:(dim(Dataset)[1])){
@@ -24,7 +26,8 @@ RRZnorm = function(Dataset,NormalizePerRow=TRUE){
 				Z = Dataset2 - mean(Dataset2)
 				temp_Zvalue = Z / sd(Dataset2)
 
-				Dataset[i,] = temp_Zvalue
+				out[i,] = temp_Zvalue
+				#return(out)
 			}
 		}else{
 			for(i in 1:(dim(Dataset)[2])){
@@ -32,10 +35,10 @@ RRZnorm = function(Dataset,NormalizePerRow=TRUE){
 				Z = Dataset2 - mean(Dataset2)
 				temp_Zvalue = Z / sd(Dataset2)
 
-				Dataset[,i] = temp_Zvalue
-				
+				out[,i] = temp_Zvalue
+				#return(out)
 			}
 		}
 	}
-	return(Dataset)
+	out
 }
