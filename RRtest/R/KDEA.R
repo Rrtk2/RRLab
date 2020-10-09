@@ -138,8 +138,8 @@ Class = as.factor(as.character(dataset[,f_dataset_class_column_id]))
 set.seed(42)
 FoldSamples = caret::createDataPartition(Class, p = s_partitionlength, list = FALSE, times = s_k)
 res_super = list()
-res_logFC = data.frame(Feature=colnames(dataset)[1:((dim(dataset)[2])-1)])
-res_Pval = data.frame(Feature=colnames(dataset)[1:((dim(dataset)[2])-1)])
+#res_logFC = data.frame(Feature=colnames(dataset)[1:((dim(dataset)[2])-1)])
+#res_Pval = data.frame(Feature=colnames(dataset)[1:((dim(dataset)[2])-1)])
 CounterOneTimeOnly = 0
 
 if(is.na(s_CovFormula)){
@@ -222,68 +222,43 @@ for( i in 1:s_k){
 	# Store all results of fold [i] into super object using predefined structure
 	res_super[[i]] = data.frame(names = rownames(temp_results),FC = temp_results[,s_CovOfImportance], Pval = temp_results$P.Value,stringsAsFactors=FALSE)
 	
-	# Store only logFC results of fold [i] into super object using predefined structure
-	res_logFC[,(i+1)] = as.numeric(temp_results[match(as.character(res_logFC$Feature),x=rownames(temp_results)),s_CovOfImportance])
-	
-	# Store only Pvalue results of fold [i] into super object using predefined structure
-	res_Pval[,(i+1)] = as.numeric(temp_results$P.Value[match(as.character(res_Pval$Feature),x=rownames(temp_results))])
+	## Store only logFC results of fold [i] into super object using predefined #structure
+	#res_logFC[,(i+1)] = #as.numeric(temp_results[match(as.character(res_logFC$Feature),x=rownames(temp_re#sults)),s_CovOfImportance])
+	#
+	## Store only Pvalue results of fold [i] into super object using predefined #structure
+	#res_Pval[,(i+1)] = #as.numeric(temp_results$P.Value[match(as.character(res_Pval$Feature),x=rownames(#temp_results))])
 
 }
 
 #-----------------------------------------------------------------------------------------------------#
-#							process dataframe
+#							process dataframe for ranks and plot
 #-----------------------------------------------------------------------------------------------------#
-
-# Format the predefined structure, rownames = featurenames
-rownames(res_logFC) = res_logFC$Feature
-res_logFC = res_logFC[,-1]
-
-# Format the predefined structure, rownames = featurenames
-rownames(res_Pval) = res_Pval$Feature
-res_Pval = res_Pval[,-1]
-
-# Calulate some metrics on LogFC
-for( i in 1:(dim(res_logFC)[1])){
-	res_logFC[i,"Median"] = median(as.numeric(res_logFC[i,1:s_k]))
-	res_logFC[i,"SD"] = sd(as.numeric(res_logFC[i,1:s_k]))
-	res_logFC[i,"mean"] = mean(as.numeric(res_logFC[i,1:s_k]))
-	res_logFC[i,"min"] = min(as.numeric(res_logFC[i,1:s_k]))
-	res_logFC[i,"max"] = max(as.numeric(res_logFC[i,1:s_k]))
-}
-
-# Calulate some metrics on Pvalue
-for( i in 1:(dim(res_Pval)[1])){
-	res_Pval[i,"Median"] = median(as.numeric(res_Pval[i,1:s_k]))
-	res_Pval[i,"mean"] = mean(as.numeric(res_Pval[i,1:s_k]))
-	res_Pval[i,"min"] = min(as.numeric(res_Pval[i,1:s_k]))
-	res_Pval[i,"max"] = max(as.numeric(res_Pval[i,1:s_k]))
-	res_Pval[i,"AmountSign"] = sum(res_Pval[i,1:s_k]<=s_pvalTH)
-}
-
-
-#-----------------------------------------------------------------------------------------------------#
-#							RANKS
-#-----------------------------------------------------------------------------------------------------#
-# Calculate the amount of times to be observed significant, 
-RankValue_Pval = rank(-res_Pval[,"AmountSign"] , ties.method ="max")
-RankValue_Pval = RankValue_Pval/max(abs(RankValue_Pval))
-
-RankValue_LogFC = rank(-abs(res_logFC[,"Median"] ), ties.method ="max")
-RankValue_LogFC = RankValue_LogFC/max(abs(RankValue_LogFC))
-
-RankValue_Combined = rank(RankValue_Pval+RankValue_LogFC, ties.method ="max")
-RankValue_OrderCombined = order(RankValue_Combined)
-
-
-RankedOrderedData = data.frame(Features=rownames(res_logFC),ValuePvalAmountSig = res_Pval[,"AmountSign"], RankPval = RankValue_Pval, ValueMedianLogFC = res_logFC[,"Median"], RankLogFC = RankValue_LogFC, ValueLogFCSD = res_logFC[,"SD"], RankCombined = RankValue_Combined)
-
-RankedOrderedData = RankedOrderedData[RankValue_OrderCombined,]
-
-
-#-----------------------------------------------------------------------------------------------------#
-#							Plot
-#-----------------------------------------------------------------------------------------------------#
-
+#
+## Format the predefined structure, rownames = featurenames
+#rownames(res_logFC) = res_logFC$Feature
+#res_logFC = res_logFC[,-1]
+#
+## Format the predefined structure, rownames = featurenames
+#rownames(res_Pval) = res_Pval$Feature
+#res_Pval = res_Pval[,-1]
+#
+## Calulate some metrics on LogFC
+#for( i in 1:(dim(res_logFC)[1])){
+#	res_logFC[i,"Median"] = median(as.numeric(res_logFC[i,1:s_k]))
+#	res_logFC[i,"SD"] = sd(as.numeric(res_logFC[i,1:s_k]))
+#	res_logFC[i,"mean"] = mean(as.numeric(res_logFC[i,1:s_k]))
+#	res_logFC[i,"min"] = min(as.numeric(res_logFC[i,1:s_k]))
+#	res_logFC[i,"max"] = max(as.numeric(res_logFC[i,1:s_k]))
+#}
+#
+## Calulate some metrics on Pvalue
+#for( i in 1:(dim(res_Pval)[1])){
+#	res_Pval[i,"Median"] = median(as.numeric(res_Pval[i,1:s_k]))
+#	res_Pval[i,"mean"] = mean(as.numeric(res_Pval[i,1:s_k]))
+#	res_Pval[i,"min"] = min(as.numeric(res_Pval[i,1:s_k]))
+#	res_Pval[i,"max"] = max(as.numeric(res_Pval[i,1:s_k]))
+#	res_Pval[i,"AmountSign"] = sum(res_Pval[i,1:s_k]<=s_pvalTH)
+#}
 
 df=data.frame(res_super[[1]])
 for(i in 2:s_k){
@@ -291,7 +266,48 @@ for(i in 2:s_k){
 }
 
 df$Pval = -log10(df$Pval)
-df$Pval = round(df$Pval,1)
+df$Pval = round(df$Pval,4)
+
+
+RankedOrderedData = data.frame(FeatureName=unique(df$names),MedianLogFC=NA,MedianLog10Pval=NA)
+for(i in 1:length(unique(df$names))){
+	tempIndex = df$names==unique(df$names)[i]
+	tempdf = df[tempIndex,]
+	
+	#rownames(DF)[i] = unique(df$names)[i]
+	RankedOrderedData[i,"MedianLogFC"] = median(tempdf$FC)
+	RankedOrderedData[i,"MedianLog10Pval"] = median(tempdf$Pval)
+}
+
+
+
+#-----------------------------------------------------------------------------------------------------#
+#							RANKS
+#-----------------------------------------------------------------------------------------------------#
+# Calculate the amount of times to be observed significant, 
+RankValue_Pval = rank(-abs(RankedOrderedData$MedianLog10Pval),ties.method = "first")
+
+# this works out, median is approximation of pop; should be included
+RankValue_LogFC = rank(-abs(RankedOrderedData$MedianLogFC),ties.method = "first")
+
+# combine the ranks
+RankValue_Combined = (RankValue_Pval+RankValue_LogFC)
+
+# Put in object
+RankedOrderedData$RankLogFC = RankValue_LogFC
+RankedOrderedData$RankLog10Pval = RankValue_Pval
+RankedOrderedData$RankCombined = RankValue_Combined
+
+# reorder object
+RankedOrderedData = RankedOrderedData[order(RankedOrderedData$RankCombined),]
+
+
+
+#-----------------------------------------------------------------------------------------------------#
+#							Plot
+#-----------------------------------------------------------------------------------------------------#
+
+
 #df$names = gsub(df$names,pattern = "sp_|_.*?_HUMAN$|_.*?_HUMAN",replacement = "")
 # now for the image
 
@@ -410,7 +426,7 @@ df$Pval = round(df$Pval,1)
 		s_settings = temp
 		rm(temp)
 		
-		out=list(Rankobject = RankedOrderedData, PvalueTable =  res_Pval, LogFCTable = res_logFC, Plot=Plot, PlotFeatues = res_plotfeatures, res_super = res_super, formula = s_CovFormula, settings = s_settings)
+		out=list(Rankobject = RankedOrderedData, Plot=Plot, PlotFeatues = res_plotfeatures, res_super = res_super, Rawdata = df, formula = s_CovFormula, settings = s_settings)
 		print(Plot)
 		return(out)
 	}
