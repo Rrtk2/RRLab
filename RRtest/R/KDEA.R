@@ -138,8 +138,6 @@ Class = as.factor(as.character(dataset[,f_dataset_class_column_id]))
 set.seed(42)
 FoldSamples = caret::createDataPartition(Class, p = s_partitionlength, list = FALSE, times = s_k)
 res_super = list()
-#res_logFC = data.frame(Feature=colnames(dataset)[1:((dim(dataset)[2])-1)])
-#res_Pval = data.frame(Feature=colnames(dataset)[1:((dim(dataset)[2])-1)])
 CounterOneTimeOnly = 0
 
 if(is.na(s_CovFormula)){
@@ -155,22 +153,10 @@ for( i in 1:s_k){
 	#							Select data
 	#-----------------------------------------------------------------------------------------------------#
 	Trainindex = FoldSamples[,i]
-	#Testindex = (1:length(Class))[-FoldSamples[,i]]
-	
-	#data_train = dataset[Trainindex,]
-	#data_test = dataset[Testindex,]
-	
+
 	#-----------------------------------------------------------------------------------------------------#
 	#							LIMMA
 	#-----------------------------------------------------------------------------------------------------#
-
-
-	# set design matrix to no intercept; only groups 1 & 2
-	#Class =  as.factor(Class)
-
-	# Set the design to find the groups
-	# temp_design <- model.matrix(~0+ Group, data = relevantAnnotationOrdered)
-	# colnames(temp_design) <- c("Group1","Group2")
 
 	# Make contrasts based on "~Class" or used defined
 	# if a pheno DF os given:
@@ -222,53 +208,23 @@ for( i in 1:s_k){
 	# Store all results of fold [i] into super object using predefined structure
 	res_super[[i]] = data.frame(names = rownames(temp_results),FC = temp_results[,s_CovOfImportance], Pval = temp_results$P.Value,stringsAsFactors=FALSE)
 	
-	## Store only logFC results of fold [i] into super object using predefined #structure
-	#res_logFC[,(i+1)] = #as.numeric(temp_results[match(as.character(res_logFC$Feature),x=rownames(temp_re#sults)),s_CovOfImportance])
-	#
-	## Store only Pvalue results of fold [i] into super object using predefined #structure
-	#res_Pval[,(i+1)] = #as.numeric(temp_results$P.Value[match(as.character(res_Pval$Feature),x=rownames(#temp_results))])
 
 }
 
 #-----------------------------------------------------------------------------------------------------#
 #							process dataframe for ranks and plot
 #-----------------------------------------------------------------------------------------------------#
-#
-## Format the predefined structure, rownames = featurenames
-#rownames(res_logFC) = res_logFC$Feature
-#res_logFC = res_logFC[,-1]
-#
-## Format the predefined structure, rownames = featurenames
-#rownames(res_Pval) = res_Pval$Feature
-#res_Pval = res_Pval[,-1]
-#
-## Calulate some metrics on LogFC
-#for( i in 1:(dim(res_logFC)[1])){
-#	res_logFC[i,"Median"] = median(as.numeric(res_logFC[i,1:s_k]))
-#	res_logFC[i,"SD"] = sd(as.numeric(res_logFC[i,1:s_k]))
-#	res_logFC[i,"mean"] = mean(as.numeric(res_logFC[i,1:s_k]))
-#	res_logFC[i,"min"] = min(as.numeric(res_logFC[i,1:s_k]))
-#	res_logFC[i,"max"] = max(as.numeric(res_logFC[i,1:s_k]))
-#}
-#
-## Calulate some metrics on Pvalue
-#for( i in 1:(dim(res_Pval)[1])){
-#	res_Pval[i,"Median"] = median(as.numeric(res_Pval[i,1:s_k]))
-#	res_Pval[i,"mean"] = mean(as.numeric(res_Pval[i,1:s_k]))
-#	res_Pval[i,"min"] = min(as.numeric(res_Pval[i,1:s_k]))
-#	res_Pval[i,"max"] = max(as.numeric(res_Pval[i,1:s_k]))
-#	res_Pval[i,"AmountSign"] = sum(res_Pval[i,1:s_k]<=s_pvalTH)
-#}
-
+# Get all superresult runs
 df=data.frame(res_super[[1]])
 for(i in 2:s_k){
 	df = rbind(df,res_super[[i]])
 }
 
+# make it nicer to visualize
 df$Pval = -log10(df$Pval)
 df$Pval = round(df$Pval,4)
 
-
+# Create secific data for result (medians of FC and Pval)
 RankedOrderedData = data.frame(FeatureName=unique(df$names),MedianLogFC=NA,MedianLog10Pval=NA)
 for(i in 1:length(unique(df$names))){
 	tempIndex = df$names==unique(df$names)[i]
@@ -306,11 +262,6 @@ RankedOrderedData = RankedOrderedData[order(RankedOrderedData$RankCombined),]
 #-----------------------------------------------------------------------------------------------------#
 #							Plot
 #-----------------------------------------------------------------------------------------------------#
-
-
-#df$names = gsub(df$names,pattern = "sp_|_.*?_HUMAN$|_.*?_HUMAN",replacement = "")
-# now for the image
-
 
 # Set data in format
 	# at least (unlikly)
