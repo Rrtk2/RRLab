@@ -410,7 +410,7 @@ df$Pval = round(df$Pval,1)
 		s_settings = temp
 		rm(temp)
 		
-		out=list(Rankobject = RankedOrderedData, Plot=Plot, PlotFeatues = res_plotfeatures, res_super = res_super, formula = s_CovFormula, settings = s_settings)
+		out=list(Rankobject = RankedOrderedData, PvalueTable =  res_Pval, LogFCTable = res_logFC, Plot=Plot, PlotFeatues = res_plotfeatures, res_super = res_super, formula = s_CovFormula, settings = s_settings)
 		print(Plot)
 		return(out)
 	}
