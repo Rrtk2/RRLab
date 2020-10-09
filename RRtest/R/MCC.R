@@ -57,9 +57,9 @@ MCC = function(data, lev=NULL, model=NULL, showCM = FALSE){
 		
 	
 		
-		out = c(MCCval,AccuracyVal,RecallVal, PrecisionVal,  F1val, CombinedScVal)
+		out = c(MCCval,AccuracyVal,RecallVal, PrecisionVal, F1val, CombinedScVal)
 	}else{
-		out = c(0,0,0, 0, 0, 0,0,0,0)
+		out = c(0,0,0, 0, 0, 0)
 	}	
 	names(out) = c("MCC","Accuracy","Recall","Precision","F1","CombinedScore")
 	if(showCM){print(out)}
