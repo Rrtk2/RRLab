@@ -251,8 +251,8 @@ df$Pval = round(df$Pval,4)
 #}
 
 #setup parallel backend to use many processors
-cores=doParallel::detectCores()
-cl <- doParallel::makeCluster(cores[1]-1) #not to overload your computer
+cores=parallel::detectCores()
+cl <- parallel::makeCluster(cores[1]-1) #not to overload your computer
 doParallel::registerDoParallel(cl)
 
 RankedOrderedData <- foreach::foreach(i=1:length(unique(df$names)), .combine=rbind) %dopar% {
@@ -272,7 +272,7 @@ RankedOrderedData <- foreach::foreach(i=1:length(unique(df$names)), .combine=rbi
    tempMatrix #Equivalent to finalMatrix = rbind(finalMatrix, tempMatrix)
 }
 #stop cluster
-doParallel::stopCluster(cl)
+parallel::stopCluster(cl)
 
 
 
