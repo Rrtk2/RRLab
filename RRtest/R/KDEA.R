@@ -236,33 +236,59 @@ df$Pval = round(df$Pval,4)
 
 # Create secific data for result (medians of FC and Pval)
 RankedOrderedData = data.frame(FeatureName=unique(df$names),MedianLogFC=NA,MedianLog10Pval=NA)
+temp = df
 uniquenames = unique(df$names)
-ptm <- proc.time()
-for(i in 1:length(uniquenames)){
-	tempIndex = df$names==uniquenames[i]
-	tempdf = df[tempIndex,]
-	
-	
-	#rownames(DF)[i] = unique(df$names)[i]
-	RankedOrderedData[i,"MedianLogFC"] = median(tempdf$FC)
-	RankedOrderedData[i,"MedianLog10Pval"] = median(tempdf$Pval)
-	
-	if(i==floor(length(unique(df$names))*0.10)){
-		cat("10% done\n")
-		print(proc.time() - ptm)}
-		
-	if(i==floor(length(unique(df$names))*0.25)){
-		cat("25% done\n")
-		print(proc.time() - ptm)}
-		
-	if(i==floor(length(unique(df$names))*0.50)){
-		cat("50% done\n")
-		print(proc.time() - ptm)}
-		
-	if(i==floor(length(unique(df$names))*0.75)){
-		cat("75% done\n")
-		print(proc.time() - ptm)}
-}
+
+
+MatchedIndex = match(uniquenames,x=temp$names)
+temp_lists1 = vector(mode = "list", length = length(uniquenames))
+#for(i in 1:length(uniquenames)){
+#	#tempIndex = temp$names==uniquenames[i]
+#	temp_lists1[[i]] = which(MatchedIndex==i)
+#	print(i)
+#}
+
+
+#setup parallel backend to use many processors
+cores=parallel::detectCores()
+cl <- parallel::makeCluster(cores[1]-1) #not to overload your computer
+#doParallel::registerDoParallel(cl)
+clusterExport(cl, "MatchedIndex")
+
+temp_lists1 = parLapply(cl,1:length(uniquenames),function(i){
+	which(MatchedIndex==i)
+})
+#
+#temp_lists1 = lapply(1:length(uniquenames),function(i){
+#	which(MatchedIndex==i)
+#	print(i)
+#})
+
+#stop cluster
+parallel::stopCluster(cl)
+
+
+
+temp_lists = vector(mode = "list", length = length(uniquenames))
+temp_lists = lapply(temp_lists1,function(x){
+temp[x,]
+})
+
+FeatureName = lapply(temp_lists,function(x){x[1,1]})
+MedianLogFC = lapply(temp_lists,function(x){median(x[,2])})
+MedianLog10Pval = lapply(temp_lists,function(x){median(x[,3])})
+
+RankedOrderedData = data.frame(FeatureName = unlist(FeatureName),MedianLogFC = unlist(MedianLogFC),MedianLog10Pval = unlist(MedianLog10Pval))
+
+#for(i in 1:length(uniquenames)){
+#	#tempIndex = temp$names==uniquenames[i]
+#	tempdf = temp_lists[[i]]
+#	 
+#	RankedOrderedData[i,] = #data.frame(FeatureName=uniquenames[i],MedianLogFC=as.numeric(median(tempdf$FC)),Medi#anLog10Pval=as.numeric(median(tempdf$Pval)))
+#	
+#	print(i)
+#
+#}
 
 
 
