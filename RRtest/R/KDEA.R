@@ -1,6 +1,6 @@
 #' KDEA
 #'
-#' K-fold Differential Expression Analysis (KDEA)
+#' Leave-p-Out Cross-Validation Differential Expression Analysis (KDEA or LpO CV DEA)
 #' Purpose:
 #' Repeated random-sampled Limma analysis is applied to get estimates of variability in DEA, then by selecting the most robust features,
 #' improved follow-up analysis is possible. Please see details for required dataset structure!
@@ -27,6 +27,7 @@
 #' @param s_logFCTH Minimum logFC required threshold (float).
 #' @param s_CovFormula Defaults to "~Class"; can be changed, however, the column entered in f_dataset_class_column_id is called class, and in formula should be treated so. Example: in iris the function can be run using KDEA(iris,5). The fifth column ("species") will be renamed to "Class" therefore the formula should be "~Class" and not "~Species". Other columns keep their names, therefore "~Class+Sepal.Width" is possible. This function extracts the 1st term from the formula, this is set by s_CovOfImportance, which can be changed appropriately. 
 #' @param s_CovOfImportance Automatically searches the correct "Class" column, usally 1; This is the column which is extracted after running limma::topTable. When s_CovFormula = NA then the first column is the LogFC column. When edited to eg "~Class+Sepal.Width", the first column is the "Class" FC and the second column is the effect of "Sepal.Width". Make sure this matches.
+#' @param s_ShowPlot Create plots (can take a long time when evaluating big datasets (50k+ features) set to TRUE (default)
 #' @param s_Verbose Show more info if TRUE (default)
 #'
 #' @return A list of imporant features, a dataframe of ranked features, the plot, and indermediate results.
@@ -37,7 +38,7 @@
 #' KDEA(dataset = iris, f_dataset_class_column_id = 5, s_CovOfImportance = 1)
 #' @export
 
-KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_PhenoDataFrame = NA,s_omitNA = TRUE, s_partitionlength = 0.5, s_k = floor(sqrt(dim(dataset)[1])), s_pvalTH = 0.05, s_AmountSignTH = floor(s_k*0.3), s_logFCTH=NA, s_CovFormula = NA, s_CovOfImportance = NA, s_Verbose=TRUE) {
+KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_PhenoDataFrame = NA,s_omitNA = TRUE, s_partitionlength = 0.5, s_k = floor(sqrt(dim(dataset)[1])), s_pvalTH = 0.05, s_AmountSignTH = floor(s_k*0.3), s_logFCTH=NA, s_CovFormula = NA, s_CovOfImportance = NA, s_ShowPlot=TRUE s_Verbose=TRUE) {
 
 #-----------------------------------------------------------------------------------------------------#
 #							checks
@@ -378,7 +379,7 @@ RankedOrderedData = RankedOrderedData[order(RankedOrderedData$RankCombined),]
 		rm(temp)
 		
 		out=list(Rankobject = RankedOrderedData, Plot=Plot, PlotFeatues = res_plotfeatures, res_super = res_super, Rawdata = df, formula = s_CovFormula, settings = s_settings)
-		print(Plot)
+		if(s_ShowPlot){print(Plot)}
 		return(out)
 	}
 		
