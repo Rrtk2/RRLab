@@ -257,15 +257,15 @@ doParallel::registerDoParallel(cl)
 
 RankedOrderedData <- foreach::foreach(i=1:length(unique(df$names)), .combine=rbind) %dopar% {
   
-	Featurename = unique(df$names)[i]
+	FeatureName = unique(df$names)[i]
   
-	temp_1 = df[df$names==Featurename,]
+	temp_1 = df[df$names==FeatureName,]
     
 	MedianLogFC = median(temp_1$FC)
 	
 	MedianLog10Pval = median(temp_1$Pval)
   
-	tempMatrix = data.frame(Featurename = Featurename, MedianLogFC = MedianLogFC,MedianLog10Pval=MedianLog10Pval)
+	tempMatrix = data.frame(FeatureName = FeatureName, MedianLogFC = MedianLogFC,MedianLog10Pval=MedianLog10Pval)
 	
 	#tempMatrix = c(Featurename,MedianLogFC,MedianLog10Pval)
 
