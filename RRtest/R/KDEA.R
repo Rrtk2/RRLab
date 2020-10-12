@@ -234,45 +234,66 @@ for(i in 2:s_k){
 df$Pval = -log10(df$Pval)
 df$Pval = round(df$Pval,4)
 
-## Create secific data for result (medians of FC and Pval)
-#RankedOrderedData = #data.frame(FeatureName=unique(df$names),MedianLogFC=NA,MedianLog10Pval=NA)
-#for(i in 1:length(unique(df$names))){
-#	tempIndex = df$names==unique(df$names)[i]
-#	tempdf = df[tempIndex,]
-#	
-#	#rownames(DF)[i] = unique(df$names)[i]
-#	RankedOrderedData[i,"MedianLogFC"] = median(tempdf$FC)
-#	RankedOrderedData[i,"MedianLog10Pval"] = median(tempdf$Pval)
-#	
-#	if(i==floor(length(unique(df$names))*0.10)){cat("10% done\n")}
-#	if(i==floor(length(unique(df$names))*0.25)){cat("25% done\n")}
-#	if(i==floor(length(unique(df$names))*0.50)){cat("50% done\n")}
-#	if(i==floor(length(unique(df$names))*0.75)){cat("75% done\n")}
-#}
+# Create secific data for result (medians of FC and Pval)
+RankedOrderedData = data.frame(FeatureName=unique(df$names),MedianLogFC=NA,MedianLog10Pval=NA)
+uniquenames = unique(df$names)
+ptm <- proc.time()
+for(i in 1:length(uniquenames)){
+	tempIndex = df$names==uniquenames[i]
+	tempdf = df[tempIndex,]
+	
+	
+	#rownames(DF)[i] = unique(df$names)[i]
+	RankedOrderedData[i,"MedianLogFC"] = median(tempdf$FC)
+	RankedOrderedData[i,"MedianLog10Pval"] = median(tempdf$Pval)
+	
+	if(i==floor(length(unique(df$names))*0.10)){
+		cat("10% done\n")
+		print(proc.time() - ptm)}
+		
+	if(i==floor(length(unique(df$names))*0.25)){
+		cat("25% done\n")
+		print(proc.time() - ptm)}
+		
+	if(i==floor(length(unique(df$names))*0.50)){
+		cat("50% done\n")
+		print(proc.time() - ptm)}
+		
+	if(i==floor(length(unique(df$names))*0.75)){
+		cat("75% done\n")
+		print(proc.time() - ptm)}
+}
+
+
+
 
 #setup parallel backend to use many processors
-cores=parallel::detectCores()
-cl <- parallel::makeCluster(cores[1]-1) #not to overload your computer
-doParallel::registerDoParallel(cl)
-
-RankedOrderedData <- foreach::foreach(i=1:length(unique(df$names)), .combine=rbind) %dopar% {
-  
-	FeatureName = unique(df$names)[i]
-  
-	temp_1 = df[df$names==FeatureName,]
-    
-	MedianLogFC = median(temp_1$FC)
-	
-	MedianLog10Pval = median(temp_1$Pval)
-  
-	tempMatrix = data.frame(FeatureName = FeatureName, MedianLogFC = MedianLogFC,MedianLog10Pval=MedianLog10Pval)
-	
-	#tempMatrix = c(Featurename,MedianLogFC,MedianLog10Pval)
-
-   tempMatrix #Equivalent to finalMatrix = rbind(finalMatrix, tempMatrix)
-}
-#stop cluster
-parallel::stopCluster(cl)
+#cores=parallel::detectCores()
+#cl <- parallel::makeCluster(cores[1]-1) #not to overload your computer
+#doParallel::registerDoParallel(cl)
+#
+#RankedOrderedData <- foreach::foreach(i=1:length(unique(df$names)), #.combine=rbind) %dopar% {
+#  
+#	FeatureName = unique(df$names)[i]
+#  
+#	temp_1 = df[df$names==FeatureName,]
+#    
+#	MedianLogFC = median(temp_1$FC)
+#	
+#	MedianLog10Pval = median(temp_1$Pval)
+#  
+#	tempMatrix = data.frame(FeatureName = FeatureName, MedianLogFC = #MedianLogFC,MedianLog10Pval=MedianLog10Pval)
+#	
+#	#tempMatrix = c(Featurename,MedianLogFC,MedianLog10Pval)
+#
+#   tempMatrix #Equivalent to finalMatrix = rbind(finalMatrix, tempMatrix)
+#}
+##stop cluster
+#parallel::stopCluster(cl)
+#
+#
+## Create secific data for result (medians of FC and Pval)
+#RankedOrderedData = #data.frame(FeatureName=unique(df$names),MedianLogFC=NA,MedianLog10Pval=NA)
 
 
 
