@@ -16,6 +16,7 @@ KDEA(
   s_logFCTH = NA,
   s_CovFormula = NA,
   s_CovOfImportance = NA,
+  s_MakePlot = TRUE,
   s_Verbose = TRUE
 )
 }
@@ -42,13 +43,15 @@ KDEA(
 
 \item{s_CovOfImportance}{Automatically searches the correct "Class" column, usally 1; This is the column which is extracted after running limma::topTable. When s_CovFormula = NA then the first column is the LogFC column. When edited to eg "~Class+Sepal.Width", the first column is the "Class" FC and the second column is the effect of "Sepal.Width". Make sure this matches.}
 
+\item{s_MakePlot}{Create plots (can take a long time when evaluating big datasets (50k+ features) set to TRUE (default)}
+
 \item{s_Verbose}{Show more info if TRUE (default)}
 }
 \value{
 A list of imporant features, a dataframe of ranked features, the plot, and indermediate results.
 }
 \description{
-K-fold Differential Expression Analysis (KDEA)
+Leave-p-Out Cross-Validation Differential Expression Analysis (KDEA or LpO CV DEA)
 Purpose:
 Repeated random-sampled Limma analysis is applied to get estimates of variability in DEA, then by selecting the most robust features,
 improved follow-up analysis is possible. Please see details for required dataset structure!
