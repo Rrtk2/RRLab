@@ -251,11 +251,11 @@ temp_lists1 = vector(mode = "list", length = length(uniquenames))
 
 #setup parallel backend to use many processors
 cores=parallel::detectCores()
-cl <- parallel::makeCluster(cores[1]-1) #not to overload your computer
+cl <- parallel::makeCluster(cores[1]-1) #not to overload computer
 #doParallel::registerDoParallel(cl)
 clusterExport(cl, "MatchedIndex")
 
-temp_lists1 = parLapply(cl,1:length(uniquenames),function(i){
+temp_lists1 = parallel::parLapply(cl,1:length(uniquenames),function(i){
 	which(MatchedIndex==i)
 })
 #
