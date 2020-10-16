@@ -235,7 +235,7 @@ df$Pval = -log10(df$Pval)
 df$Pval = round(df$Pval,4)
 
 # Create secific data for result (medians of FC and Pval)
-RankedOrderedData = data.frame(FeatureName=unique(df$names),MedianLogFC=NA,MedianLog10Pval=NA)
+RankedOrderedData = data.frame(FeatureName = NA,MedianLogFC = NA,MedianLog10Pval = NA,MeanLogFC=NA,SDLogFC=NA)
 temp = df
 uniquenames = unique(df$names)
 
