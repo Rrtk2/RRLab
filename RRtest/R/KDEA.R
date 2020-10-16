@@ -239,46 +239,39 @@ RankedOrderedData = data.frame(FeatureName=unique(df$names),MedianLogFC=NA,Media
 temp = df
 uniquenames = unique(df$names)
 
-
+# find all unique names in temp, and give them a number
 MatchedIndex <<- match(uniquenames,x=temp$names)
+
+#create lists based on unique names
 temp_lists1 = vector(mode = "list", length = length(uniquenames))
-#for(i in 1:length(uniquenames)){
-#	#tempIndex = temp$names==uniquenames[i]
-#	temp_lists1[[i]] = which(MatchedIndex==i)
-#	print(i)
-#}
 
-#print(MatchedIndex)
-#setup parallel backend to use many processors
-cores=parallel::detectCores()
-cl <- parallel::makeCluster(cores[1]-1) #not to overload computer
-#doParallel::registerDoParallel(cl)
-parallel::clusterExport(cl, "MatchedIndex")
+#parLapply, extract all locations in specific number (name)
+	cores=parallel::detectCores()
+	cl <- parallel::makeCluster(cores[1]-1) #not to overload computer
 
-temp_lists1 = parallel::parLapply(cl,1:length(uniquenames),function(i){
-	which(MatchedIndex==i)
-})
-#
-#temp_lists1 = lapply(1:length(uniquenames),function(i){
-#	which(MatchedIndex==i)
-#	print(i)
-#})
+	parallel::clusterExport(cl, "MatchedIndex")
 
-#stop cluster
-parallel::stopCluster(cl)
+	temp_lists1 = parallel::parLapply(cl,1:length(uniquenames),function(i){
+		which(MatchedIndex==i)
+	})
 
+	#stop cluster
+	parallel::stopCluster(cl)
 
-
+# per unique name locations, get these 
 temp_lists = vector(mode = "list", length = length(uniquenames))
 temp_lists = lapply(temp_lists1,function(x){
-temp[x,]
+	temp[x,]
 })
 
 FeatureName = lapply(temp_lists,function(x){x[1,1]})
 MedianLogFC = lapply(temp_lists,function(x){median(x[,2])})
 MedianLog10Pval = lapply(temp_lists,function(x){median(x[,3])})
 
-RankedOrderedData = data.frame(FeatureName = unlist(FeatureName),MedianLogFC = unlist(MedianLogFC),MedianLog10Pval = unlist(MedianLog10Pval))
+MeanLogFC = lapply(temp_lists,function(x){mean(x[,2])})
+SDLogFC = lapply(temp_lists,function(x){sd(x[,2])})
+
+RankedOrderedData = data.frame(FeatureName = unlist(FeatureName),MedianLogFC = unlist(MedianLogFC),MedianLog10Pval = unlist(MedianLog10Pval),MeanLogFC=unlist(MeanLogFC),SDLogFC=unlist(SDLogFC))
 
 #for(i in 1:length(uniquenames)){
 #	#tempIndex = temp$names==uniquenames[i]
@@ -332,13 +325,22 @@ RankValue_Pval = rank(-abs(RankedOrderedData$MedianLog10Pval),ties.method = "fir
 # this works out, median is approximation of pop; should be included
 RankValue_LogFC = rank(-abs(RankedOrderedData$MedianLogFC),ties.method = "first")
 
+# this works out, median is approximation of pop; should be included
+RankValue_LogFC_mean = rank(-abs(RankedOrderedData$MeanLogFC),ties.method = "first")
+
+# this works out, median is approximation of pop; should be included
+RankValue_LogFC_SD = rank(-abs(RankedOrderedData$SDLogFC),ties.method = "first")
+
+
 # combine the ranks
-RankValue_Combined = (RankValue_Pval+RankValue_LogFC)
+RankValue_Combined = (RankValue_LogFC_SD+RankValue_LogFC)
 
 # Put in object
 RankedOrderedData$RankLogFC = RankValue_LogFC
 RankedOrderedData$RankLog10Pval = RankValue_Pval
 RankedOrderedData$RankCombined = RankValue_Combined
+RankedOrderedData$RankValue_LogFC_mean = RankValue_LogFC_mean
+RankedOrderedData$RankValue_LogFC_SD = RankValue_LogFC_SD
 
 # reorder object
 RankedOrderedData = RankedOrderedData[order(RankedOrderedData$RankCombined),]
