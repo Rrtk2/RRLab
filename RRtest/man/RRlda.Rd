@@ -2,7 +2,7 @@
 % Please edit documentation in R/RRlda.R
 \name{RRlda}
 \alias{RRlda}
-\title{MCC}
+\title{RRlda}
 \usage{
 RRlda(
   dataset = iris,
