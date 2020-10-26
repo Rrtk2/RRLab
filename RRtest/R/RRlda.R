@@ -1,4 +1,4 @@
-#' MCC
+#' RRlda
 #'
 #' This will extract the most contributing features from a dataset, based on the given formula. Internally computed by LDA, the IQR between classes is calculated and ordered by amplitude. Biggest amplitude holds the biggest difference between classes, thus should contibute to classification.
 #'
