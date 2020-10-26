@@ -333,7 +333,7 @@ RankValue_LogFC_SD = rank(-abs(RankedOrderedData$SDLogFC),ties.method = "first")
 
 
 # combine the ranks
-RankValue_Combined = (RankValue_LogFC_SD+RankValue_LogFC)
+RankValue_Combined = (RankValue_Pval+RankValue_LogFC)
 
 # Put in object
 RankedOrderedData$RankLogFC = RankValue_LogFC
