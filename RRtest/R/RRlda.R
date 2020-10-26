@@ -5,7 +5,7 @@
 #' @param dataset Input the dataset object.
 #' @param f_dataset_class_column_id Column number of "Class" column. Detected automatically if this column is called "Class" (case sensitive).
 #' @param s_formula The formula used in the LDA. Should be like "Class~." (class determined by remaining columns)
-#' @param minimumfeaturesPercentagePlaceholdertext PLACEHOLDER; extracts % from ordered top IQR; 
+#' @param minimumfeaturesPercentagePlaceholdertext PLACEHOLDER; extracts percentage from ordered top IQR; 
 #' @param plotPCAImage Plot a PCA image from filtered dataset.
 #' @param minimumAmountOfFeatures Minimum amount of resulted featured used to in PCA plot (and dataset filtering).
 #'
@@ -42,7 +42,7 @@ RRlda = function(dataset=iris,f_dataset_class_column_id = NA,s_formula="Class~."
 	colnames(a_res) = c("IQR")
 	result_object[["Importance"]] = a_res
 	
-	# select % of features & filter data
+	# select perentage of features & filter data
 	temp_featureNum = max(minimumAmountOfFeatures,ceiling(length(a_res)*minimumfeaturesPercentagePlaceholdertext))
 	All_new_data_cals = c(rownames(a_res)[1:temp_featureNum],"Class")
 	dataset_small = dataset[,All_new_data_cals]
