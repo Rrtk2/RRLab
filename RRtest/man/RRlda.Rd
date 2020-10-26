@@ -20,7 +20,7 @@ RRlda(
 
 \item{s_formula}{The formula used in the LDA. Should be like "Class~." (class determined by remaining columns)}
 
-\item{minimumfeaturesPercentagePlaceholdertext}{PLACEHOLDER; extracts % from ordered top IQR;}
+\item{minimumfeaturesPercentagePlaceholdertext}{PLACEHOLDER; extracts percentage from ordered top IQR;}
 
 \item{plotPCAImage}{Plot a PCA image from filtered dataset.}
 
