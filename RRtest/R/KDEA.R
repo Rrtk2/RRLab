@@ -39,7 +39,7 @@
 #' KDEA(dataset = iris, f_dataset_class_column_id = 5, s_CovOfImportance = 1)
 #' @export
 
-KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_PhenoDataFrame = NA,s_omitNA = TRUE, s_partitionlength = 0.5, s_k = floor(sqrt(dim(dataset)[1])), s_pvalTH = 0.05, s_AmountSignTH = floor(s_k*0.3), s_logFCTH=NA, s_CovFormula = NA, s_CovOfImportance = NA, s_MakePlot=TRUE, s_Verbose=TRUE) {
+KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_PhenoDataFrame = NA,s_omitNA = TRUE, s_partitionlength = 0.5, s_k = floor(sqrt(dim(dataset)[1])), s_pvalTH = 0.05, s_AmountSignTH = floor(s_k*0.3), s_logFCTH=NA, s_CovFormula = NA, s_CovOfImportance = NA, s_MakePlot=TRUE, s_Verbose=TRUE, s_maxCPUCores = 100) {
 
 #-----------------------------------------------------------------------------------------------------#
 #							checks
@@ -152,6 +152,7 @@ Class = as.factor(as.character(dataset[,f_dataset_class_column_id]))
 set.seed(42)
 FoldSamples = caret::createDataPartition(Class, p = s_partitionlength, list = FALSE, times = s_k)
 res_super = list()
+res_super_raw = list()
 CounterOneTimeOnly = 0
 
 if(is.na(s_CovFormula)){
@@ -218,6 +219,10 @@ for( i in 1:s_k){
 	# Store all results of fold [i] into super object using predefined structure
 	res_super[[i]] = data.frame(names = rownames(temp_results),FC = temp_results[,s_CovOfImportance], Pval = temp_results$P.Value,stringsAsFactors=FALSE)
 	
+	
+	# Store all results of fold [i] into super object using predefined structure
+	res_super_raw[[i]] = temp_results
+	
 
 }
 
@@ -246,8 +251,14 @@ MatchedIndex <<- match(uniquenames,x=temp$names)
 temp_lists1 = vector(mode = "list", length = length(uniquenames))
 
 #parLapply, extract all locations in specific number (name)
-	cores=parallel::detectCores()
-	cl <- parallel::makeCluster(cores[1]-1) #not to overload computer
+
+temp_max_cores = min(s_maxCPUCores,(detectCores()-1))
+		cl <- makePSOCKcluster(max(1,temp_max_cores))
+		
+		
+	cores = parallel::detectCores()
+	cores = min(s_maxCPUCores,(cores-1))
+	cl <- parallel::makeCluster(cores) #not to overload computer
 
 	parallel::clusterExport(cl, "MatchedIndex")
 
@@ -389,7 +400,7 @@ RankedOrderedData = RankedOrderedData[order(RankedOrderedData$RankCombined),]
 		rm(temp)
 	
 		warning("No significant values to present, increase s_pvalTH")
-		out=list(Rankobject = RankedOrderedData, Plot=NA, PlotFeatues = NA, res_super = res_super, Rawdata = df, formula = s_CovFormula, design = temp_design, settings = s_settings)
+		out=list(Rankobject = RankedOrderedData, Plot=NA, PlotFeatues = NA, res_super = res_super, Rawdata = df, RawLimmaRes = res_super_raw, formula = s_CovFormula, design = temp_design, settings = s_settings)
 		return(out)
 	}else{
 		# check if plot needs to be made
@@ -481,7 +492,7 @@ RankedOrderedData = RankedOrderedData[order(RankedOrderedData$RankCombined),]
 			
 			
 			print(Plot)
-			out=list(Rankobject = RankedOrderedData, Plot=Plot, PlotFeatues = res_plotfeatures, res_super = res_super, Rawdata = df, formula = s_CovFormula, design = temp_design, settings = s_settings)
+			out=list(Rankobject = RankedOrderedData, Plot=Plot, PlotFeatues = res_plotfeatures, res_super = res_super, Rawdata = df, RawLimmaRes = res_super_raw, formula = s_CovFormula, design = temp_design, settings = s_settings)
 			
 			
 		}else{
@@ -502,7 +513,7 @@ RankedOrderedData = RankedOrderedData[order(RankedOrderedData$RankCombined),]
 			s_settings = temp
 			rm(temp)
 			
-			out=list(Rankobject = RankedOrderedData, Plot=NA, PlotFeatues = NA, res_super = res_super, Rawdata = df, formula = s_CovFormula, design = temp_design, settings = s_settings)
+			out=list(Rankobject = RankedOrderedData, Plot=NA, PlotFeatues = NA, res_super = res_super, Rawdata = df, RawLimmaRes = res_super_raw, formula = s_CovFormula, design = temp_design, settings = s_settings)
 		}
 		return(out)
 	}
