@@ -3,6 +3,7 @@
 export(KDEA)
 export(MCC)
 export(PCAproject)
+export(ProjectTimePCA)
 export(RRDistribution)
 export(RRFE)
 export(RRFEDataset)
