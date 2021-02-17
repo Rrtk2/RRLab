@@ -27,5 +27,5 @@ This function required a dataset with column 1 as observations and column 2 with
 }
 \examples{
 pMCC(data.frame(obs=c(1,1,1,2,2,2),pred=c(0.1,0.1,0.4999,0.5001,0.9,0.9)))
-pMCC(data.frame(obs=c(1,1,1,2,2,2),pred=c(0.1,0.1,0.2,0.0.8,0.9,0.9)))
+pMCC(data.frame(obs=c(1,1,1,2,2,2),pred=c(0.1,0.1,0.2,0.8,0.9,0.9)))
 }
