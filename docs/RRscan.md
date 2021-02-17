@@ -39,5 +39,5 @@ Detected possible outliers:
 
 
 And the resulted images:
-![Typical PCA](/docs/404)
+![Image](/docs/404)
 
