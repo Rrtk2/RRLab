@@ -16,24 +16,27 @@
 #' @export
 
 
-#-----------------------------------------------------------------------------------------------------#
-	#							Fundametal properties of data
-	#-----------------------------------------------------------------------------------------------------#
-	# Distribution of values
-	# Distribution of mean
-	# Distribution of variance
 
-	# Mean-variance
-
-	data=data_Transcriptomics$Counts
-	data = t(data)
-
-	coltest = round(runif(dim(data)[2],1,2))
-
-RRscan(data,LogTransform = T,color=coltest)
 
 RRscan = function(data=data,color=1,LogTransform=FALSE,ImageDir="",PlotImages=TRUE,SaveImages=FALSE,FindOutliers=TRUE,verbose=FALSE){
 
+	
+	
+##---------------------------------------------------------------------------#--------------------------#
+#	#							Fundametal properties of data
+#	##---------------------------------------------------------------------------#--------------------------#
+#	# Distribution of values
+#	# Distribution of mean
+#	# Distribution of variance
+#
+#	# Mean-variance
+#
+#	data=data_Transcriptomics$Counts
+#	data = t(data)
+#
+#	coltest = round(runif(dim(data)[2],1,2))
+#
+#RRscan(data,LogTransform = T,color=coltest)
 	#-----------------------------------------------------------------------------------------------------#
 	#							Check conditions
 	#-----------------------------------------------------------------------------------------------------#

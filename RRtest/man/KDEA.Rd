@@ -17,7 +17,8 @@ KDEA(
   s_CovFormula = NA,
   s_CovOfImportance = NA,
   s_MakePlot = TRUE,
-  s_Verbose = TRUE
+  s_Verbose = TRUE,
+  s_maxCPUCores = 100
 )
 }
 \arguments{
