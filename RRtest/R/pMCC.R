@@ -12,7 +12,7 @@
 #' @return Several metrics to indicate machine learning performance ("MCC","Accuracy","Recall","Precision","F1","CombinedScore")
 #' @examples
 #' pMCC(data.frame(obs=c(1,1,1,2,2,2),pred=c(0.1,0.1,0.4999,0.5001,0.9,0.9)))
-#' pMCC(data.frame(obs=c(1,1,1,2,2,2),pred=c(0.1,0.1,0.2,0.0.8,0.9,0.9)))
+#' pMCC(data.frame(obs=c(1,1,1,2,2,2),pred=c(0.1,0.1,0.2,0.8,0.9,0.9)))
 #' @export
 
 pMCC = function (data, lev = NULL, model = NULL, showCM = FALSE,level1=NA,s_TH = 0.5) 
@@ -34,12 +34,18 @@ pMCC = function (data, lev = NULL, model = NULL, showCM = FALSE,level1=NA,s_TH =
 #assign("b",lev,envir = .GlobalEnv)
 
 	if(is.null(lev)){
-		lev[1] = unique(data$obs)[1]
+		lev[1] = unique(data$obs)[2]
 	}
 	
 
   temp_obs = (data$obs==lev[1])+0
-  temp_pred_p = data[,lev[1]]
+  
+  if(dim(data)[2]==2){
+	temp_pred_p = data[,"pred"]
+	}else{
+	temp_pred_p = data[,lev[1]]
+  }
+  
   temp_pred_c = (temp_pred_p>=s_TH)+0
   
   # check if p is in good direction
@@ -53,6 +59,7 @@ pMCC = function (data, lev = NULL, model = NULL, showCM = FALSE,level1=NA,s_TH =
   if (names(labels(CM)[1]) == "obs") {
     CM = t(CM)
   }
+  
   if ((dim(CM)[1] == 2 & dim(CM)[2] == 2)) {
     if (showCM) {
       cat("Confusion matrix:\n")
@@ -105,16 +112,17 @@ pMCC = function (data, lev = NULL, model = NULL, showCM = FALSE,level1=NA,s_TH =
 	
 	
 	numerator <- ((TP-pTP) * (TN-pTN) - (FP-pFP) * (FN-pFN))
-    denominator <- sqrt((TP + FP) * (TP + FN) * (TN + FP) * 
-      (TN + FN))
-	  
-	  
+    denominator <- sqrt((TP + FP) * (TP + FN) * (TN + FP) * (TN + FN))
+		  
     if (denominator == 0) 
       denominator <- 1
     pMCCval <- numerator/denominator
 	
-   
-    out = c(MCCval,pMCCval)
+	# The formula needs some work, but this will work for now
+	pMCCval = pMCCval*MCCval
+    
+	#print
+	out = c(MCCval,pMCCval)
 	
 	
   }
