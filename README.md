@@ -16,6 +16,10 @@ This algorithm randomly resamples the original dataset using only 80% of all sam
 
 [See the example and results](/docs/KDEA.md) 
 
+## RR general characteristics of data scan (RRscan)
+This function will evaluate all distribution properties per feature and per sample. Also detects potential outliers based on hclust, mean+sd, var+sd(var).
+
+[See the example and results](/docs/RRscan.md) 
 
 #### Installation
 First, you need to install the devtools package. You can do this from CRAN.
