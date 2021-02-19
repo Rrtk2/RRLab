@@ -77,5 +77,9 @@ MCCx = function(data, lev=NULL, model=NULL, showCM = FALSE){
 	#}	
 	#names(out) = #c("MCC","Accuracy","Recall","Precision","F1","CombinedScore")
 	#if(showCM){print(out)}
-	return(MCCval)
+	
+	out = c(MCCval)
+	names(out) <- c("MCC")
+	
+	return(out)
 }
