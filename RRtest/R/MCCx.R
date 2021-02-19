@@ -10,9 +10,6 @@
 #' @return Several metrics to indicate machine learning performance ("MCC","Accuracy","Recall","Precision","F1","CombinedScore")
 #' @examples
 #' MCCx(data.frame(obs=c(1,1,1,2,2,2,3,3,3),pred=c(1,1,1,1,2,2,3,3,3)))
-#' MCCx(data.frame(obs=c(rep(0,10),rep(1,10)),pred=c(rep(0,10),rep(1,10))))
-#' MCCx(data.frame(obs=c(rep(0,10),rep(1,10)),pred=c(rep(1,10),rep(0,10))))
-#' MCCx(data.frame(obs=c(rep(0,10),rep(1,10),rep(2,10)),pred=c(rep(0,10),rep(1,10),rep(2,10))))
 #' @export
 
 MCCx = function(data, lev=NULL, model=NULL, showCM = FALSE){
