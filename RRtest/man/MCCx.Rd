@@ -2,7 +2,7 @@
 % Please edit documentation in R/MCCx.R
 \name{MCCx}
 \alias{MCCx}
-\title{Multiclass MCC}
+\title{MCCx}
 \usage{
 MCCx(data, lev = NULL, model = NULL, showCM = FALSE)
 }

@@ -1,4 +1,4 @@
-#' Multiclass MCC
+#' MCCx
 #'
 #' This function required a dataset with column 1 as observations and column 2 with predictions. Multiclass!
 #'
