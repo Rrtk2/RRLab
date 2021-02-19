@@ -2,6 +2,7 @@
 
 export(KDEA)
 export(MCC)
+export(MCCx)
 export(PCAproject)
 export(ProjectTimePCA)
 export(RRDistribution)
