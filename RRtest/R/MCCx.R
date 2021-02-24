@@ -49,6 +49,10 @@ MCCx = function(data, lev=NULL, model=NULL, showCM = FALSE){
 	denominator = denominator^(1/length(Levels))
 	MCCval <- numerator/denominator
 	
+	# if not to be computed, set to -1 (maximum value from ideal value)
+	if(is.nan(MCCval)){
+		MCCval = -1
+	}
 	# MCC will become way harder to get 'right' as the amount of classes increase, which feels natural. Instead of saying pick one of 2 you're saying pick one which is not this or that. 
 	#MCCval
 	
