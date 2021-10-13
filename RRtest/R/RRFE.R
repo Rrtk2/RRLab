@@ -32,8 +32,10 @@ s_KRepeats = 25, s_KmeansRepeat = 10, verbose = TRUE, ShowPlots = FALSE,s_GetLoa
 # http://tinyheero.github.io/jekyll/update/2015/07/26/making-your-first-R-package.html
 
 # devtools::load_all("D:\\Github\\RRtest\\RRtest")
+# devtools::load_all("C:/Users/p70072451/Documents/GitHub/RRtest/RRtest")
 # devtools::document("D:\\Github\\RRtest\\RRtest")
-#	
+# devtools::document("C:/Users/p70072451/Documents/GitHub/RRtest/RRtest")
+
 
 	#-----------------------------------------------------------------------------------------------------#
 	#							Start / Checks
