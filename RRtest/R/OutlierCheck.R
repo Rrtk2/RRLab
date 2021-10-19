@@ -52,7 +52,7 @@ OutlierCheck = function(data,Type=1){
 		test_JB =  function(x){(length(x)/6)*((test_Skewness(x)^2)+((0.25*(test_Kurt(x)-3))^2))}
 		
 		# Normality test, Shapiro–Wilk test
-		test_shapiro = function(x){as.numeric(shapiro.test(x)$statistic)}
+		#test_shapiro = function(x){as.numeric(shapiro.test(x)$statistic)}
 		
 		# uniform test (QQ unif dist, RMSE)
 		test_QQunifRMSE = function(x){sqrt(sum((quantile(x,(1:length(x))/length(x)) - quantile(x = runif(10000,min = min(x),max = max(x)),(1:length(x))/length(x)))^2)/length(x))}
@@ -70,12 +70,12 @@ OutlierCheck = function(data,Type=1){
 		test_Skewness(x),
 		test_variance(x),
 		test_JB(x),
-		test_shapiro(x),
+		#test_shapiro(x),
 		test_QQunifRMSE(x),
 		test_QQnormRMSE(x))
 	})))
 	
-	colnames(res) = c("Kurt","RMSE","Skew","Var","JB","Shapiro","QQunif","QQnorm")
+	colnames(res) = c("Kurt","RMSE","Skew","Var","JB","QQunif","QQnorm")
 	
 	rownames(res) = rownames(data)
 	

@@ -4,7 +4,7 @@
 \alias{MCC}
 \title{MCC}
 \usage{
-MCC(data, lev = NULL, model = NULL, showCM = FALSE)
+MCC(data, lev = NULL, model = NULL, showCM = FALSE, Verbose = FALSE)
 }
 \arguments{
 \item{data}{Input the dataset object (column 1 = OBS; column 2 = PRED).}
@@ -23,4 +23,16 @@ This function required a dataset with column 1 as observations and column 2 with
 }
 \examples{
 MCC(data.frame(obs=c(1,1,1,2,2,2),pred=c(1,1,1,1,2,2)))
+# Example high accurate
+MCC(data.frame(obs=c(rep(1,1000),rep(2,1000)),pred=c(rep(1,1000),rep(2,1000))))
+# Example Inverse accurate
+MCC(data.frame(obs=c(rep(2,1000),rep(1,1000)),pred=c(rep(1,1000),rep(2,1000))))
+# Example random 
+MCC(data.frame(obs=c(round(runif(200000,0,1))),pred=c(round(runif(200000,0,1)))))
+# Example high accurate inbalance
+MCC(data.frame(obs=c(rep(1,1000),rep(2,10)),pred=c(rep(1,1000),rep(2,10))))
+# Example high accurate EXTREME inbalance
+MCC(data.frame(obs=c(rep(1,1000),rep(2,10)),pred=c(rep(1,1010))))
+# Example moderate accurate inbalance
+MCC(data.frame(obs=c(rep(1,1000),round(runif(10,1,2))),pred=c(rep(1,1000),rep(2,10))))
 }
