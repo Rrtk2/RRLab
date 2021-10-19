@@ -87,7 +87,7 @@ MCC = function(data, lev=NULL, model=NULL, showCM = FALSE,Verbose=FALSE){
 		# INFO:
 		# MK, MCC, Informedness, YoudenJ range from -1 to 1
 		
-		out = c(TP = TP,FP = FP,TN=TN,FN=FN,P=P,N=N,PP=PP,PN=PN,Total_Pop=Total_Pop,TPR=TPR,FPR=FPR,FNR=FNR,TNR=TNR,PPV=PPV,FDR=FDR,FOR=FOR,NPV=NPV,PLR=PLR,NLR=NLR,MK=MK,DOR=DOR,BA=BA,F1=F1,FMI=FMI,MCC=MCC,TS=TS,Prevalence=Prevalence,Prevalence_THR=Prevalence_THR,ACC=ACC,Informedness=Informedness,YoudenJ=YoudenJ)
+		out = c(TPR=TPR,FPR=FPR,FNR=FNR,TNR=TNR,PPV=PPV,FDR=FDR,FOR=FOR,NPV=NPV,PLR=PLR,NLR=NLR,MK=MK,DOR=DOR,BA=BA,F1=F1,FMI=FMI,MCC=MCC,TS=TS,Prevalence=Prevalence,Prevalence_THR=Prevalence_THR,ACC=ACC,Informedness=Informedness,YoudenJ=YoudenJ)
 		
 		# round on 4 dec.
 		out = round(out,4)
@@ -108,7 +108,7 @@ MCC = function(data, lev=NULL, model=NULL, showCM = FALSE,Verbose=FALSE){
 		
 	}else{
 		# These are ref values at RANDOM. because opposide prediction is actually worse than random in terms of optimization
-		out = c(TP = TP,FP = FP,TN=TN,FN=FN,P=P,N=N,PP=PP,PN=PN,Total_Pop=Total_Pop,TPR=0.5,FPR=0.5,FNR=0.5,TNR=0.5,PPV=0.5,FDR=0.5,FOR=0.5,NPV=0.5,PLR=1.0,NLR=1.0,MK=0.0,DOR=1.0,BA=0.5,F1=0.5,FMI=0.5,MCC=0.0,TS=0.3,Prevalence=0.5,Prevalence_THR=0.5,ACC=0.5,Informedness=0.0,YoudenJ=0.0)
+		out = c(TPR=0.5,FPR=0.5,FNR=0.5,TNR=0.5,PPV=0.5,FDR=0.5,FOR=0.5,NPV=0.5,PLR=1.0,NLR=1.0,MK=0.0,DOR=1.0,BA=0.5,F1=0.5,FMI=0.5,MCC=0.0,TS=0.3,Prevalence=0.5,Prevalence_THR=0.5,ACC=0.5,Informedness=0.0,YoudenJ=0.0)
 	}	
 		
 	if(showCM){print(out)}
