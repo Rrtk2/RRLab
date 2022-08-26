@@ -4,22 +4,21 @@
 \alias{KDEA}
 \title{KDEA}
 \usage{
-KDEA(
-  dataset = NA,
-  f_dataset_class_column_id = NA,
-  s_PhenoDataFrame = NA,
-  s_omitNA = TRUE,
-  s_partitionlength = 0.5,
-  s_k = floor(sqrt(dim(dataset)[1])),
-  s_pvalTH = 0.05,
-  s_AmountSignTH = floor(s_k * 0.3),
-  s_logFCTH = NA,
-  s_CovFormula = NA,
-  s_CovOfImportance = NA,
-  s_MakePlot = TRUE,
-  s_Verbose = TRUE,
-  s_maxCPUCores = 100
-)
+Leave-p-Out Cross-Validation Differential Expression Analysis (KDEA or LpO CV DEA)
+Purpose:
+Repeated random-sampled Limma analysis is applied to get estimates of variability in DEA, then by selecting the most robust features,
+improved follow-up analysis is possible. Please see details for required dataset structure!
+
+Dataset:
+Requires a dataset with rows as samples and columns as features.
+Rownames should contain the unique identifier of the samples.
+It should contain a "Class" column to be able to detect classes. (OR use phenotypic data Classes)
+
+Phenotypic data:
+Can be added to account for covariates using formula.
+Requires rows as samples and columns as features.
+Should contain a column with unique identifiers of the samples.
+It should contain a "Class" column to be able to detect classes. (OR use dataset Classes)
 }
 \arguments{
 \item{dataset}{Input the dataset object (row=sample; col=feature; 'class' column required).}
@@ -36,7 +35,9 @@ KDEA(
 
 \item{s_pvalTH}{Significance threshold.}
 
-\item{s_AmountSignTH}{Amount of times found to be significant throughout all folds threshold (integer).}
+\item{s_AmountSignTH}{Amount of times found to be significant throughout all folds threshold (integer). Set by default to roughly 30% of amount of folds}
+
+\item{s_showall}{Ignore set cutoff and show all results, but can get messy. Logical (Default to FALSE)}
 
 \item{s_logFCTH}{Minimum logFC required threshold (float).}
 
@@ -48,29 +49,29 @@ KDEA(
 
 \item{s_Verbose}{Show more info if TRUE (default)}
 }
-\value{
-A list of imporant features, a dataframe of ranked features, the plot, and indermediate results.
-}
 \description{
-Leave-p-Out Cross-Validation Differential Expression Analysis (KDEA or LpO CV DEA)
-Purpose:
-Repeated random-sampled Limma analysis is applied to get estimates of variability in DEA, then by selecting the most robust features,
-improved follow-up analysis is possible. Please see details for required dataset structure!
-}
-\details{
-Dataset:
-Requires a dataset with rows as samples and columns as features.
-Rownames should contain the unique identifier of the samples.
-It should contain a "Class" column to be able to detect classes. (OR use phenotypic data Classes)
-
-Phenotypic data:
-Can be added to account for covariates using formula.
-Requires rows as samples and columns as features.
-Should contain a column with unique identifiers of the samples.
-It should contain a "Class" column to be able to detect classes. (OR use dataset Classes)
+KDEA
 }
 \examples{
+
+Intended use
+
 KDEA(dataset = dataset, s_PhenoDataFrame = Phenotipic_data, s_CovFormula = "~Class + age + sex")
-KDEA(dataset = mtcars, f_dataset_class_column_id = which(colnames(mtcars)=="am"), s_CovFormula = "~Class + gear")
+
+
+Example using IRIS
+
 KDEA(dataset = iris, f_dataset_class_column_id = 5, s_CovOfImportance = 1)
+
+
+Example using mtcars
+
+KDEA(dataset = mtcars, f_dataset_class_column_id = which(colnames(mtcars)=="am"), s_CovFormula = "~Class + gear")
+
+
+Example using transcriptiomic data
+
+Get data from library(mixOmics) -> data(stemcells)
+
+KDEA(dataset = data.frame((stemcells$gene),Class = stemcells$celltype), f_dataset_class_column_id = stemcells$celltype,s_CovOfImportance = 1 , s_CovFormula = "~ Class")
 }

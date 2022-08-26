@@ -17,7 +17,7 @@
 #' @export
 
 
-RRRemoveCor = function(dataset,TH=0.7){
+RRRemoveCor = function(dataset,TH=0.7,Addmean = TRUE){
 	#---------------#
 	# 	CHECKS		#
 	#---------------#
@@ -85,6 +85,9 @@ RRRemoveCor = function(dataset,TH=0.7){
 			temp_lm_res = residuals(temp_lm1) # residuals
 			temp_lm_fit = temp_lm1$fitted.values #fitted vals
 
+			# Check if mean needs to be added, if so, add
+			if(Addmean){temp_lm_res = temp_lm_res+mean(temp_lm1$fitted.values)}
+
 			# store fitted and residual info
 			b[,colnames(b)==results[i,1]] = temp_lm_res
 			b[,colnames(b)==results[i,2]] = temp_lm_fit
@@ -93,6 +96,7 @@ RRRemoveCor = function(dataset,TH=0.7){
 			#FALSE ->  2 ~ 1
 			temp_lm_res = residuals(temp_lm2) # residuals
 			temp_lm_fit = temp_lm2$fitted.values #fitted vals
+			if(Addmean){temp_lm_res = temp_lm_res+mean(temp_lm1$fitted.values)}
 
 			# store new vars
 			b[,colnames(b)==results[i,2]] = temp_lm_res

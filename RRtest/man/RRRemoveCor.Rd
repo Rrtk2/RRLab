@@ -4,7 +4,7 @@
 \alias{RRRemoveCor}
 \title{RRRemoveCor}
 \usage{
-RRRemoveCor(dataset, TH = 0.7)
+RRRemoveCor(dataset, TH = 0.7, Addmean = TRUE)
 }
 \arguments{
 \item{dataset}{Input the dataset in dataframe format (row=sample, col=feature).}

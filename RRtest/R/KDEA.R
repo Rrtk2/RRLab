@@ -1,5 +1,5 @@
 #' KDEA
-#'
+#' @usage
 #' Leave-p-Out Cross-Validation Differential Expression Analysis (KDEA or LpO CV DEA)
 #' Purpose:
 #' Repeated random-sampled Limma analysis is applied to get estimates of variability in DEA, then by selecting the most robust features,
@@ -23,23 +23,42 @@
 #' @param s_partitionlength Percentage number used in resampling (0-1) (default 0.5).
 #' @param s_k Amount of folds (auto generated based on sqrt(sampleNo).
 #' @param s_pvalTH Significance threshold.
-#' @param s_AmountSignTH Amount of times found to be significant throughout all folds threshold (integer).
+#' @param s_AmountSignTH Amount of times found to be significant throughout all folds threshold (integer). Set by default to roughly 30% of amount of folds
+#' @param s_showall Ignore set cutoff and show all results, but can get messy. Logical (Default to FALSE)
 #' @param s_logFCTH Minimum logFC required threshold (float).
 #' @param s_CovFormula Defaults to "~Class"; can be changed, however, the column entered in f_dataset_class_column_id is called class, and in formula should be treated so. Example: in iris the function can be run using KDEA(iris,5). The fifth column ("species") will be renamed to "Class" therefore the formula should be "~Class" and not "~Species". Other columns keep their names, therefore "~Class+Sepal.Width" is possible. This function extracts the 1st term from the formula, this is set by s_CovOfImportance, which can be changed appropriately. 
 #' @param s_CovOfImportance Automatically searches the correct "Class" column, usally 1; This is the column which is extracted after running limma::topTable. When s_CovFormula = NA then the first column is the LogFC column. When edited to eg "~Class+Sepal.Width", the first column is the "Class" FC and the second column is the effect of "Sepal.Width". Make sure this matches.
 #' @param s_MakePlot Create plots (can take a long time when evaluating big datasets (50k+ features) set to TRUE (default)
 #' @param s_Verbose Show more info if TRUE (default)
 #'
-#' @return A list of imporant features, a dataframe of ranked features, the plot, and indermediate results.
 #' @importFrom magrittr "%>%"
 #' @importFrom foreach `%dopar%`
 #' @examples
+#'
+#' Intended use
+#'
 #' KDEA(dataset = dataset, s_PhenoDataFrame = Phenotipic_data, s_CovFormula = "~Class + age + sex")
-#' KDEA(dataset = mtcars, f_dataset_class_column_id = which(colnames(mtcars)=="am"), s_CovFormula = "~Class + gear")
+#'
+#'
+#' Example using IRIS
+#'
 #' KDEA(dataset = iris, f_dataset_class_column_id = 5, s_CovOfImportance = 1)
+#'
+#'
+#' Example using mtcars
+#'
+#' KDEA(dataset = mtcars, f_dataset_class_column_id = which(colnames(mtcars)=="am"), s_CovFormula = "~Class + gear")
+#' 
+#'
+#' Example using transcriptiomic data
+#'
+#' Get data from library(mixOmics) -> data(stemcells)
+#'
+#' KDEA(dataset = data.frame((stemcells$gene),Class = stemcells$celltype), f_dataset_class_column_id = stemcells$celltype,s_CovOfImportance = 1 , s_CovFormula = "~ Class")
 #' @export
 
-KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_PhenoDataFrame = NA,s_omitNA = TRUE, s_partitionlength = 0.5, s_k = floor(sqrt(dim(dataset)[1])), s_pvalTH = 0.05, s_AmountSignTH = floor(s_k*0.3), s_logFCTH=NA, s_CovFormula = NA, s_CovOfImportance = NA, s_MakePlot=TRUE, s_Verbose=TRUE, s_maxCPUCores = 100) {
+KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_PhenoDataFrame = NA,s_omitNA = TRUE, s_partitionlength = 0.5, s_k = floor(sqrt(dim(dataset)[1])), s_pvalTH = 0.05, s_AmountSignTH = floor(s_k*0.3), 
+s_showall=FALSE, s_logFCTH=NA, s_CovFormula = NA, s_CovOfImportance = NA, s_MakePlot=TRUE, s_Verbose=TRUE, s_maxCPUCores = 100) {
 
 #-----------------------------------------------------------------------------------------------------#
 #							checks
@@ -251,23 +270,25 @@ MatchedIndex <<- match(uniquenames,x=temp$names)
 temp_lists1 = vector(mode = "list", length = length(uniquenames))
 
 #parLapply, extract all locations in specific number (name)
+#
+#temp_max_cores = min(s_maxCPUCores,(parallel::detectCores()-1))
+#		cl <- parallel::makePSOCKcluster(max(1,temp_max_cores))
+#		
+#		
+#	cores = parallel::detectCores()
+#	cores = min(s_maxCPUCores,(cores-1))
+#	cl <- parallel::makeCluster(cores) #not to overload computer
+#
+#	parallel::clusterExport(cl, "MatchedIndex")
+#
+#	temp_lists1 = parallel::parLapply(cl,1:length(uniquenames),function(i){
+#		which(MatchedIndex==i)
+#	})
+#
+#	#stop cluster
+#	parallel::stopCluster(cl)
 
-temp_max_cores = min(s_maxCPUCores,(detectCores()-1))
-		cl <- makePSOCKcluster(max(1,temp_max_cores))
-		
-		
-	cores = parallel::detectCores()
-	cores = min(s_maxCPUCores,(cores-1))
-	cl <- parallel::makeCluster(cores) #not to overload computer
-
-	parallel::clusterExport(cl, "MatchedIndex")
-
-	temp_lists1 = parallel::parLapply(cl,1:length(uniquenames),function(i){
-		which(MatchedIndex==i)
-	})
-
-	#stop cluster
-	parallel::stopCluster(cl)
+temp_lists1 = lapply(1:length(uniquenames),function(i){which(MatchedIndex==i)})
 
 # per unique name locations, get these 
 temp_lists = vector(mode = "list", length = length(uniquenames))
@@ -281,8 +302,9 @@ MedianLog10Pval = lapply(temp_lists,function(x){median(x[,3])})
 
 MeanLogFC = lapply(temp_lists,function(x){mean(x[,2])})
 SDLogFC = lapply(temp_lists,function(x){sd(x[,2])})
+IQRLogFC = lapply(temp_lists,function(x){IQR(x[,2])})
 
-RankedOrderedData = data.frame(FeatureName = unlist(FeatureName),MedianLogFC = unlist(MedianLogFC),MedianLog10Pval = unlist(MedianLog10Pval),MeanLogFC=unlist(MeanLogFC),SDLogFC=unlist(SDLogFC))
+RankedOrderedData = data.frame(FeatureName = unlist(FeatureName),MedianLogFC = unlist(MedianLogFC),MedianLog10Pval = unlist(MedianLog10Pval),MeanLogFC=unlist(MeanLogFC),SDLogFC=unlist(SDLogFC),IQRLogFC = unlist(IQRLogFC))
 
 #for(i in 1:length(uniquenames)){
 #	#tempIndex = temp$names==uniquenames[i]
@@ -331,20 +353,25 @@ RankedOrderedData = data.frame(FeatureName = unlist(FeatureName),MedianLogFC = u
 #							RANKS
 #-----------------------------------------------------------------------------------------------------#
 # Calculate the amount of times to be observed significant, 
-RankValue_Pval = rank(-abs(RankedOrderedData$MedianLog10Pval),ties.method = "first")
+RankValue_Pval = rank(-abs(RankedOrderedData$MedianLog10Pval))
 
 # this works out, median is approximation of pop; should be included
-RankValue_LogFC = rank(-abs(RankedOrderedData$MedianLogFC),ties.method = "first")
+RankValue_LogFC = rank(-abs(RankedOrderedData$MedianLogFC))
 
 # this works out, median is approximation of pop; should be included
-RankValue_LogFC_mean = rank(-abs(RankedOrderedData$MeanLogFC),ties.method = "first")
+RankValue_LogFC_mean = rank(-abs(RankedOrderedData$MeanLogFC))
 
 # this works out, median is approximation of pop; should be included
-RankValue_LogFC_SD = rank(-abs(RankedOrderedData$SDLogFC),ties.method = "first")
+RankValue_LogFC_SD = rank(-abs(RankedOrderedData$SDLogFC))
 
 
 # combine the ranks
 RankValue_Combined = (RankValue_Pval+RankValue_LogFC)
+
+# Best estimation; Small spread (IQR). high logFC. high sign.
+RankValue_bestRank = rank(RankedOrderedData$IQRLogFC) + rank(-abs(RankedOrderedData$MeanLogFC)) + rank(-RankedOrderedData$MedianLog10Pval)
+
+
 
 # Put in object
 RankedOrderedData$RankLogFC = RankValue_LogFC
@@ -352,16 +379,16 @@ RankedOrderedData$RankLog10Pval = RankValue_Pval
 RankedOrderedData$RankCombined = RankValue_Combined
 RankedOrderedData$RankValue_LogFC_mean = RankValue_LogFC_mean
 RankedOrderedData$RankValue_LogFC_SD = RankValue_LogFC_SD
+RankedOrderedData$Best_Rank = RankValue_bestRank
 
 # reorder object
-RankedOrderedData = RankedOrderedData[order(RankedOrderedData$RankCombined),]
+RankedOrderedData = RankedOrderedData[order(RankedOrderedData$Best_Rank,rank(RankedOrderedData$IQRLogFC),rank(-abs(RankedOrderedData$MeanLogFC)),rank(-RankedOrderedData$MedianLog10Pval)),]
 
 
 
 #-----------------------------------------------------------------------------------------------------#
 #							Plot
 #-----------------------------------------------------------------------------------------------------#
-
 # Set data in format
 	# at least (unlikly)
 	df_f = df[df$Pval>-log10(s_pvalTH),]  
@@ -372,10 +399,17 @@ RankedOrderedData = RankedOrderedData[order(RankedOrderedData$RankCombined),]
 	}
 	
 	# minimal logFC
-	df_f = df_f[abs(df_f$FC)>s_logFCTH,]  
-		 
-	# filter on at least 7 SIGNIFICANT ocurrences
-	df_f = df_f[df_f$names%in%names( table(df_f$names)[table(df_f$names)>s_AmountSignTH]),]
+	if(s_showall != TRUE){
+		df_f = df_f[abs(df_f$FC)>s_logFCTH,]  
+	} 
+	# filter on at least  SIGNIFICANT ocurrences
+	if(s_showall != TRUE){
+		df_f = df_f[df_f$names%in%names( table(df_f$names)[table(df_f$names)>s_AmountSignTH]),]
+	}
+	# filter on best features only! TEMP@RRR top 10% with min of 3
+	if(s_showall != TRUE){
+		df_f = df_f[df_f$names%in%RankedOrderedData$FeatureName[1:max(ceiling(length(RankedOrderedData$Best_Rank) * 0.1),3)],]
+	}
 	#unique(df_f$names)
 	
 	# getthe features and get the nonsignificant as well
@@ -406,10 +440,11 @@ RankedOrderedData = RankedOrderedData[order(RankedOrderedData$RankCombined),]
 		# check if plot needs to be made
 		if(s_MakePlot){
 			# present the results in table
-			Plot = df_f  %>%
-			dplyr::mutate(names = fct_reorder(names, abs(FC))) %>%
-			ggplot2::ggplot(
-				aes(x = names, y = FC, fill = Pval)
+			df_f = df_f[order(abs(df_f$FC),decreasing = FALSE),]
+			
+			
+			Plot = ggplot2::ggplot(df_f,
+				aes(x = reorder(names, abs(FC)), y = FC, fill = Pval)
 			)+
 			ggplot2::scale_y_continuous(
 				breaks = round(seq(-ceiling(max(abs(df_f$FC))),ceiling(max(abs(df_f$FC))),(ceiling(max(abs(df_f$FC)))/3)),2),
