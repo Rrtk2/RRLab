@@ -34,9 +34,13 @@ jobs:
         run: |
           print("hello this is R")
         shell: Rscript {0}
-      - name: Install RRtest
+      - name: Install devtools
         run: |
          install.packages("devtools")
+         library(devtools)
+        shell: Rscript {0}       
+      - name: Install RRtest
+        run: |
          devtools::install_github("Rrtk2/RRtest/RRtest")
         shell: Rscript {0}       
       - name: Check install
