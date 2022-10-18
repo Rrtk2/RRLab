@@ -36,7 +36,7 @@ jobs:
         shell: Rscript {0}
       - name: Install devtools
         run: |
-         install.packages("devtools")
+         install.packages("devtools", dependencies = TRUE)
          library(devtools)
         shell: Rscript {0}       
       - name: Install RRtest
