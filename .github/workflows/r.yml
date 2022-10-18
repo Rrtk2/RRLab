@@ -30,8 +30,18 @@ jobs:
         uses: r-lib/actions/setup-r@f57f1301a053485946083d7a45022b278929a78a
         with:
           r-version: ${{ matrix.r-version }}
-      - name: Check
+      - name: Check R running
         run: |
-          print("hello world")
-          print(RRtest::RRnorm(1:10))
+          print("hello this is R")
         shell: Rscript {0}
+      - name: Install RRtest
+        run: |
+         install.packages("devtools")
+         devtools::install_github("Rrtk2/RRtest/RRtest")
+        shell: Rscript {0}       
+      - name: Check install
+        run: |
+         library("RRtest")
+         print(RRnorm(1:10))
+        shell: Rscript {0} 
+
