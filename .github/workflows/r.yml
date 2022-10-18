@@ -33,4 +33,5 @@ jobs:
       - name: Check
         run: |
           print("hello world")
+          print(RRtest::RRnorm(1:10))
         shell: Rscript {0}
