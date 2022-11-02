@@ -60,6 +60,9 @@
 KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_PhenoDataFrame = NA,s_omitNA = TRUE, s_partitionlength = 0.5, s_k = floor(sqrt(dim(dataset)[1])), s_pvalTH = 0.05, s_AmountSignTH = floor(s_k*0.3), 
 s_showall=FALSE, s_logFCTH=NA, s_CovFormula = NA, s_CovOfImportance = NA, s_MakePlot=TRUE, s_Verbose=TRUE, s_maxCPUCores = 100) {
 
+# get ggplot because it errors???
+require(ggplot2)
+
 #-----------------------------------------------------------------------------------------------------#
 #							checks
 #-----------------------------------------------------------------------------------------------------#
@@ -77,7 +80,7 @@ if(!is.null(dim(s_PhenoDataFrame)[1])){
 	# make sure s_PhenoDataFrame is dataframe
 	s_PhenoDataFrame = as.data.frame(s_PhenoDataFrame)
 
-	cat(paste0("Using phenotypic dataframe for Class and covariates (if needed):\nMake sure rownames(dataset) and rownames(s_PhenoDataFrame) use the same identifiers!!\n"))
+	message(paste0("Using phenotypic dataframe for Class and covariates (if needed):\nMake sure rownames(dataset) and rownames(s_PhenoDataFrame) use the same identifiers!!\n"))
 	
 	# test if dataframe
 	if(!is.data.frame(s_PhenoDataFrame)){
@@ -99,7 +102,7 @@ if(!is.null(dim(s_PhenoDataFrame)[1])){
 	IdNameColInPhenoDF = names(which(lapply(s_PhenoDataFrame,FUN = function(X){sum(as.character(rownames(dataset))%in%as.character(X))})>0)[1])
 	
 	# print found linker
-	cat(paste0("Found column '",IdNameColInPhenoDF,"' as universal linker between pheno and data\n"))
+	message(paste0("Found column '",IdNameColInPhenoDF,"' as universal linker between pheno and data\n"))
 	
 	# Add the linker to rownames of frame, this is required for temp_design
 	rownames(s_PhenoDataFrame) = as.character(s_PhenoDataFrame[[IdNameColInPhenoDF]])
@@ -129,13 +132,13 @@ if(!is.null(dim(s_PhenoDataFrame)[1])){
 #-----------------------------------------------------------------------------------------------------#
 
 if(s_Verbose){
-	cat(paste0("Starting KDEA using:\n"))
-	cat(paste0("Using formula: ",if(is.na(s_CovFormula)){"~Class"}else{s_CovFormula} ,"\n"))
-	cat(paste0("Resamplefraction: ",s_partitionlength ,"\n"))
-	cat(paste0("Folds: ",s_k ,"\n"))
-	cat(paste0("Pval TH: ",s_pvalTH ,"\n"))
+	message(paste0("Starting KDEA using:"))
+	message(paste0("    Using formula: ",if(is.na(s_CovFormula)){"~Class"}else{s_CovFormula} ,""))
+	message(paste0("    Resamplefraction: ",s_partitionlength ,""))
+	message(paste0("    Folds: ",s_k ,""))
+	message(paste0("    Pval TH: ",s_pvalTH ,""))
 	#cat(paste0("LogFC TH: ",s_logFCTH ,"\n")) # automated now
-	cat(paste0("Amount Sign TH: ",s_AmountSignTH ,"\n"))
+	message(paste0("    Amount Sign TH: ",s_AmountSignTH ,""))
 }
 
 #-----------------------------------------------------------------------------------------------------#
@@ -179,8 +182,11 @@ if(is.na(s_CovFormula)){
 	s_CovFormula = "~Class"
 }
 		
-		
+
 # start fold loop
+pb <- progress:: progress_bar$new(
+  format = "    Testing folds [:bar] :percent eta: :eta",
+  total = s_k, clear = FALSE, width= 60)
 for( i in 1:s_k){
 
 	#-----------------------------------------------------------------------------------------------------#
@@ -210,7 +216,12 @@ for( i in 1:s_k){
 	temp_fit <- limma::eBayes(temp_fit)
 	
 	# extract results
-	temp_results = limma::topTable(temp_fit, adjust="BH",num=Inf)
+	if(colnames(temp_fit)[1]=="(Intercept)"){
+		temp_results = limma::topTable(temp_fit, coef =2, adjust="BH",num=Inf)
+	}else{
+		temp_results = limma::topTable(temp_fit, adjust="BH",num=Inf)
+	}
+	
 	
 
 	# Check if the focus unchanged, than find the "Class" column.
@@ -221,7 +232,7 @@ for( i in 1:s_k){
 			s_CovOfImportance = which(names(temp_results)=="Class")
 			if(is.na(s_CovOfImportance[1])){
 				s_CovOfImportance=1
-				cat(paste0("s_CovOfImportance is FORCED to: ",s_CovOfImportance,"\n","This results in cov: ",names(temp_results)[s_CovOfImportance],"\n","ALERT: \nPlease consider setting the s_CovOfImportance","\n"))
+				message(paste0(" !  s_CovOfImportance is FORCED to: ",s_CovOfImportance,"\n"," !    This results in cov: ",names(temp_results)[s_CovOfImportance],"\n"," >    Please consider setting the s_CovOfImportance",""))
 			}
 		}
 		CounterOneTimeOnly = 1
@@ -229,7 +240,7 @@ for( i in 1:s_k){
 		# Check if the focus is shifted to "Class" or to another covariate; print these results.
 		if(CounterOneTimeOnly==0){
 			if(s_Verbose){
-				cat(paste0("s_CovOfImportance is set to: ",s_CovOfImportance,"\n","This results in cov: ",names(temp_results)[s_CovOfImportance],"\n"))
+				message(paste0("    s_CovOfImportance is set to: ",s_CovOfImportance,"\n","    This results in cov: ",names(temp_results)[s_CovOfImportance],""))
 			}
 			CounterOneTimeOnly = 1
 		}
@@ -242,21 +253,25 @@ for( i in 1:s_k){
 	# Store all results of fold [i] into super object using predefined structure
 	res_super_raw[[i]] = temp_results
 	
-
+	# up the pb
+	pb$tick()
 }
 
 #-----------------------------------------------------------------------------------------------------#
 #							process dataframe for ranks and plot
 #-----------------------------------------------------------------------------------------------------#
 # Get all superresult runs
+
 df=data.frame(res_super[[1]])
 for(i in 2:s_k){
 	df = rbind(df,res_super[[i]])
 }
 
-# make it nicer to visualize
-df$Pval = -log10(df$Pval)
-df$Pval = round(df$Pval,4)
+df$Pval = round(df$Pval,6)
+
+vals = -log10(df$Pval)
+df$Pval = vals
+
 
 # Create secific data for result (medians of FC and Pval)
 RankedOrderedData = data.frame(FeatureName = NA,MedianLogFC = NA,MedianLog10Pval = NA,MeanLogFC=NA,SDLogFC=NA)
@@ -288,21 +303,36 @@ temp_lists1 = vector(mode = "list", length = length(uniquenames))
 #	#stop cluster
 #	parallel::stopCluster(cl)
 
-temp_lists1 = lapply(1:length(uniquenames),function(i){which(MatchedIndex==i)})
 
+pb <- progress:: progress_bar$new(
+  format = "    Collecting results [:bar] :percent eta: :eta",
+  total = length(uniquenames), clear = FALSE, width= 60)
+  pb$tick(0)
+  
+for( i in 1:length(uniquenames)){
+	temp_lists1[[i]] = which(MatchedIndex==i)
+	pb$tick()
+}
+
+pb <- progress:: progress_bar$new(
+  format = "    Calculating result metrics [:bar] :percent eta: :eta",
+  total = 7, clear = FALSE, width= 60)
+  pb$tick(0)
+  
 # per unique name locations, get these 
 temp_lists = vector(mode = "list", length = length(uniquenames))
 temp_lists = lapply(temp_lists1,function(x){
 	temp[x,]
 })
+pb$tick()
 
-FeatureName = lapply(temp_lists,function(x){x[1,1]})
-MedianLogFC = lapply(temp_lists,function(x){median(x[,2])})
-MedianLog10Pval = lapply(temp_lists,function(x){median(x[,3])})
+FeatureName = lapply(temp_lists,function(x){x[1,1]});pb$tick()
+MedianLogFC = lapply(temp_lists,function(x){median(x[,2])});pb$tick()
+MedianLog10Pval = lapply(temp_lists,function(x){median(x[,3])});pb$tick()
 
-MeanLogFC = lapply(temp_lists,function(x){mean(x[,2])})
-SDLogFC = lapply(temp_lists,function(x){sd(x[,2])})
-IQRLogFC = lapply(temp_lists,function(x){IQR(x[,2])})
+MeanLogFC = lapply(temp_lists,function(x){mean(x[,2])});pb$tick()
+SDLogFC = lapply(temp_lists,function(x){sd(x[,2])});pb$tick()
+IQRLogFC = lapply(temp_lists,function(x){IQR(x[,2])});pb$tick()
 
 RankedOrderedData = data.frame(FeatureName = unlist(FeatureName),MedianLogFC = unlist(MedianLogFC),MedianLog10Pval = unlist(MedianLog10Pval),MeanLogFC=unlist(MeanLogFC),SDLogFC=unlist(SDLogFC),IQRLogFC = unlist(IQRLogFC))
 
@@ -434,15 +464,15 @@ RankedOrderedData = RankedOrderedData[order(RankedOrderedData$Best_Rank,rank(Ran
 		rm(temp)
 	
 		warning("No significant values to present, increase s_pvalTH")
-		out=list(Rankobject = RankedOrderedData, Plot=NA, PlotFeatues = NA, res_super = res_super, Rawdata = df, RawLimmaRes = res_super_raw, formula = s_CovFormula, design = temp_design, settings = s_settings)
+		out=list(Rankobject = RankedOrderedData, Plot=NA, PlotFeatures = NA, res_super = res_super, Rawdata = df, RawLimmaRes = res_super_raw, formula = s_CovFormula, design = temp_design, settings = s_settings)
 		return(out)
 	}else{
 		# check if plot needs to be made
 		if(s_MakePlot){
 			# present the results in table
-			df_f = df_f[order(abs(df_f$FC),decreasing = FALSE),]
+			df_f = df_f[order(abs(df_f$FC),decreasing = TRUE),]
 			
-			
+			message("    Plotting results")
 			Plot = ggplot2::ggplot(df_f,
 				aes(x = reorder(names, abs(FC)), y = FC, fill = Pval)
 			)+
@@ -527,7 +557,7 @@ RankedOrderedData = RankedOrderedData[order(RankedOrderedData$Best_Rank,rank(Ran
 			
 			
 			print(Plot)
-			out=list(Rankobject = RankedOrderedData, Plot=Plot, PlotFeatues = res_plotfeatures, res_super = res_super, Rawdata = df, RawLimmaRes = res_super_raw, formula = s_CovFormula, design = temp_design, settings = s_settings)
+			out=list(Rankobject = RankedOrderedData, Plot=Plot, PlotFeatures = res_plotfeatures, res_super = res_super, Rawdata = df, RawLimmaRes = res_super_raw, formula = s_CovFormula, design = temp_design, settings = s_settings)
 			
 			
 		}else{
@@ -548,7 +578,7 @@ RankedOrderedData = RankedOrderedData[order(RankedOrderedData$Best_Rank,rank(Ran
 			s_settings = temp
 			rm(temp)
 			
-			out=list(Rankobject = RankedOrderedData, Plot=NA, PlotFeatues = NA, res_super = res_super, Rawdata = df, RawLimmaRes = res_super_raw, formula = s_CovFormula, design = temp_design, settings = s_settings)
+			out=list(Rankobject = RankedOrderedData, Plot=NA, PlotFeatures = NA, res_super = res_super, Rawdata = df, RawLimmaRes = res_super_raw, formula = s_CovFormula, design = temp_design, settings = s_settings)
 		}
 		return(out)
 	}

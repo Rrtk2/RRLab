@@ -1,7 +1,8 @@
 #' MCCx
 #'
 #' This function required a dataset with column 1 as observations and column 2 with predictions. Multiclass!
-#'
+#' It borrows inspiration from Macro-Averaging per class.
+#' 
 #' @param data Input the dataset object (column 1 = OBS; column 2 = PRED).
 #' @param lev NULL
 #' @param model NULL

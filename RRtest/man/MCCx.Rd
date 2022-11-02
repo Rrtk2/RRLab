@@ -20,6 +20,7 @@ Several metrics to indicate machine learning performance ("MCC","Accuracy","Reca
 }
 \description{
 This function required a dataset with column 1 as observations and column 2 with predictions. Multiclass!
+It borrows inspiration from Macro-Averaging per class.
 }
 \examples{
 MCCx(data.frame(obs=c(1,1,1,2,2,2,3,3,3),pred=c(1,1,1,1,2,2,3,3,3)))
