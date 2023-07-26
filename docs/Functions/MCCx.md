@@ -1,9 +1,6 @@
 | [HOME](https://github.com/Rrtk2/RRtest)  |  [FUNCTIONS](https://github.com/Rrtk2/RRtest/blob/master/docs/Functions/FunctionsOverview.md)  | 
 
-To create a GitHub Markdown file describing the function, providing an example, and showing the output, you can follow the template below:
-
-```markdown
-# MCCx
+# MCCx function
 
 This function calculates the Matthews Correlation Coefficient (MCC) for multiclass classification tasks. It requires a dataset with two columns: column 1 for observations and column 2 for predictions. It is inspired by Macro-Averaging per class.
 
