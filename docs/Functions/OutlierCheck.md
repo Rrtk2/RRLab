@@ -1,9 +1,6 @@
 | [HOME](https://github.com/Rrtk2/RRtest)  |  [FUNCTIONS](https://github.com/Rrtk2/RRtest/blob/master/docs/Functions/FunctionsOverview.md)  | 
 
-Sure! Below is the GitHub Markdown file describing the `OutlierCheck` function along with an example and expected output:
-
-```markdown
-# OutlierCheck
+# OutlierCheck function
 
 ## Description
 This function checks for outliers in a dataset with rows as features and columns as samples. It performs a set of tests to identify outlier samples or features, depending on the specified type.
