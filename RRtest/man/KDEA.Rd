@@ -27,27 +27,33 @@ It should contain a "Class" column to be able to detect classes. (OR use dataset
 
 \item{s_PhenoDataFrame}{This is a dataframe containing the phenotypic observations, rows as samples, columns as features. Make sure one of columns has exact identifiers found in rownames(dataset)}
 
-\item{s_omitNA}{Remove NAs from data.}
-
-\item{s_partitionlength}{Percentage number used in resampling (0-1) (default 0.5).}
-
-\item{s_k}{Amount of folds (auto generated based on sqrt(sampleNo).}
-
-\item{s_pvalTH}{Significance threshold.}
-
-\item{s_AmountSignTH}{Amount of times found to be significant throughout all folds threshold (integer). Set by default to roughly 30% of amount of folds}
-
-\item{s_showall}{Ignore set cutoff and show all results, but can get messy. Logical (Default to FALSE)}
-
 \item{s_logFCTH}{Minimum logFC required threshold (float).}
 
 \item{s_CovFormula}{Defaults to "~Class"; can be changed, however, the column entered in f_dataset_class_column_id is called class, and in formula should be treated so. Example: in iris the function can be run using KDEA(iris,5). The fifth column ("species") will be renamed to "Class" therefore the formula should be "~Class" and not "~Species". Other columns keep their names, therefore "~Class+Sepal.Width" is possible. This function extracts the 1st term from the formula, this is set by s_CovOfImportance, which can be changed appropriately.}
 
+\item{s_block_coef}{Block for this variable, should be defined in s_PhenoDataFrame.}
+
 \item{s_CovOfImportance}{Automatically searches the correct "Class" column, usally 1; This is the column which is extracted after running limma::topTable. When s_CovFormula = NA then the first column is the LogFC column. When edited to eg "~Class+Sepal.Width", the first column is the "Class" FC and the second column is the effect of "Sepal.Width". Make sure this matches.}
+
+\item{s_k}{Amount of folds (auto generated based on sqrt(sampleNo).}
+
+\item{s_AmountSignTH}{Amount of times found to be significant throughout all folds threshold (integer). Set by default to roughly 30 percent of amount of folds}
+
+\item{s_showall}{Ignore set cutoff and show all results, but can get messy. Logical (Default to FALSE)}
 
 \item{s_MakePlot}{Create plots (can take a long time when evaluating big datasets (50k+ features) set to TRUE (default)}
 
 \item{s_Verbose}{Show more info if TRUE (default)}
+
+\item{s_pvalTH}{Significance threshold.}
+
+\item{s_partitionlength}{Percentage number used in resampling (0-1) (default 0.5).}
+
+\item{s_n_reps}{Used when blocking, amount of repeats to fast estimate duplicatecorrelation(limma)}
+
+\item{s_n_features}{Used when blocking, number of samples used to fast estimate duplicatecorrelation(limma)}
+
+\item{s_omitNA}{Remove NAs from data.}
 }
 \description{
 KDEA
@@ -71,7 +77,18 @@ KDEA(dataset = mtcars, f_dataset_class_column_id = which(colnames(mtcars)=="am")
 
 Example using transcriptiomic data
 
-Get data from library(mixOmics) -> data(stemcells)
+Get data from mixOmics
+library(mixOmics)
+data(stemcells)
 
 KDEA(dataset = data.frame((stemcells$gene),Class = stemcells$celltype), f_dataset_class_column_id = stemcells$celltype,s_CovOfImportance = 1 , s_CovFormula = "~ Class")
+
+Example using transcriptomic data and blocking study
+
+KDEA(dataset = data.frame(stemcells$gene),s_PhenoDataFrame = data.frame(row_names = rownames(stemcells$gene),Block = stemcells$study, Class = stemcells$celltype=="Fibroblast",Stratify = as.numeric(stemcells$celltype == "hiPSC")),s_block_coef = "Block", f_dataset_class_column_id = stemcells$celltype,s_CovOfImportance = 1 , s_CovFormula = "~ Class + Stratify")
+
+#' Example using transcriptomic data AND blocking study AND stratified sampling using formula
+
+KDEA(dataset = data.frame(stemcells$gene),s_PhenoDataFrame = data.frame(row_names = rownames(stemcells$gene),Block = stemcells$study, Class = stemcells$celltype=="Fibroblast",Stratify = as.numeric(stemcells$celltype == "hiPSC")),s_block_coef = "Block", f_dataset_class_column_id = stemcells$celltype,s_CovOfImportance = 1 , s_CovFormula = "~ Class + Stratify", s_stratifiedsampling = TRUE)
+
 }

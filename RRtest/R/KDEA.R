@@ -23,14 +23,17 @@
 #' @param s_partitionlength Percentage number used in resampling (0-1) (default 0.5).
 #' @param s_k Amount of folds (auto generated based on sqrt(sampleNo).
 #' @param s_pvalTH Significance threshold.
-#' @param s_AmountSignTH Amount of times found to be significant throughout all folds threshold (integer). Set by default to roughly 30% of amount of folds
+#' @param s_AmountSignTH Amount of times found to be significant throughout all folds threshold (integer). Set by default to roughly 30 percent of amount of folds
 #' @param s_showall Ignore set cutoff and show all results, but can get messy. Logical (Default to FALSE)
 #' @param s_logFCTH Minimum logFC required threshold (float).
 #' @param s_CovFormula Defaults to "~Class"; can be changed, however, the column entered in f_dataset_class_column_id is called class, and in formula should be treated so. Example: in iris the function can be run using KDEA(iris,5). The fifth column ("species") will be renamed to "Class" therefore the formula should be "~Class" and not "~Species". Other columns keep their names, therefore "~Class+Sepal.Width" is possible. This function extracts the 1st term from the formula, this is set by s_CovOfImportance, which can be changed appropriately. 
 #' @param s_CovOfImportance Automatically searches the correct "Class" column, usally 1; This is the column which is extracted after running limma::topTable. When s_CovFormula = NA then the first column is the LogFC column. When edited to eg "~Class+Sepal.Width", the first column is the "Class" FC and the second column is the effect of "Sepal.Width". Make sure this matches.
 #' @param s_MakePlot Create plots (can take a long time when evaluating big datasets (50k+ features) set to TRUE (default)
 #' @param s_Verbose Show more info if TRUE (default)
-#'
+#' @param s_block_coef Block for this variable, should be defined in s_PhenoDataFrame. 
+#' @param s_n_reps Used when blocking, amount of repeats to fast estimate duplicatecorrelation(limma)
+#' @param s_n_features Used when blocking, number of samples used to fast estimate duplicatecorrelation(limma)
+#' 
 #' @importFrom magrittr "%>%"
 #' @importFrom foreach `%dopar%`
 #' @examples
@@ -52,382 +55,473 @@
 #'
 #' Example using transcriptiomic data
 #'
-#' Get data from library(mixOmics) -> data(stemcells)
+#' Get data from mixOmics
+#' library(mixOmics)
+#' data(stemcells)
 #'
 #' KDEA(dataset = data.frame((stemcells$gene),Class = stemcells$celltype), f_dataset_class_column_id = stemcells$celltype,s_CovOfImportance = 1 , s_CovFormula = "~ Class")
+#' 
+#' Example using transcriptomic data and blocking study
+#' 
+#' KDEA(dataset = data.frame(stemcells$gene),s_PhenoDataFrame = data.frame(row_names = rownames(stemcells$gene),Block = stemcells$study, Class = stemcells$celltype=="Fibroblast",Stratify = as.numeric(stemcells$celltype == "hiPSC")),s_block_coef = "Block", f_dataset_class_column_id = stemcells$celltype,s_CovOfImportance = 1 , s_CovFormula = "~ Class + Stratify")
+#' 
+#' #' Example using transcriptomic data AND blocking study AND stratified sampling using formula
+#' 
+#' KDEA(dataset = data.frame(stemcells$gene),s_PhenoDataFrame = data.frame(row_names = rownames(stemcells$gene),Block = stemcells$study, Class = stemcells$celltype=="Fibroblast",Stratify = as.numeric(stemcells$celltype == "hiPSC")),s_block_coef = "Block", f_dataset_class_column_id = stemcells$celltype,s_CovOfImportance = 1 , s_CovFormula = "~ Class + Stratify", s_stratifiedsampling = TRUE)
+#' 
 #' @export
 
-KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_PhenoDataFrame = NA,s_omitNA = TRUE, s_partitionlength = 0.5, s_k = floor(sqrt(dim(dataset)[1])), s_pvalTH = 0.05, s_AmountSignTH = floor(s_k*0.3), 
-s_showall=FALSE, s_logFCTH=NA, s_CovFormula = NA, s_CovOfImportance = NA, s_MakePlot=TRUE, s_Verbose=TRUE, s_maxCPUCores = 100) {
+KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_PhenoDataFrame = NULL, s_logFCTH=NA, s_CovFormula = NA, s_block_coef = NA, s_CovOfImportance = NA, 
+s_k = floor(sqrt(dim(dataset)[1])), s_AmountSignTH = floor(s_k*0.3), s_showall=FALSE, s_MakePlot=TRUE, s_Verbose=TRUE, s_pvalTH = 0.05, s_partitionlength = 0.5,
+s_n_reps = min(25,max(floor(sqrt(dim(dataset)[2])),10)), s_n_features = max(10,floor(length(s_partitionlength*dim(dataset)[1])*0.5)),s_omitNA = TRUE, s_stratifiedsampling = FALSE) {
 
-# get ggplot because it errors???
-require(ggplot2)
+	# start timer
+	t0 = Sys.time()
 
-#-----------------------------------------------------------------------------------------------------#
-#							checks
-#-----------------------------------------------------------------------------------------------------#
-# it needs data
-# if(is.na(dataset)){stop("Please enter dataset")}
+	# get ggplot because it errors???
+	require(ggplot2)
+	# Require data table as it is needed later and i cant call the functions directly
+	require(data.table)
+	require(splitstackshape)
+	#-----------------------------------------------------------------------------------------------------#
+	#							checks
+	#-----------------------------------------------------------------------------------------------------#
+	# it needs data
+	# if(is.na(dataset)){stop("Please enter dataset")}
 
-# it cannot be more significant (number of times) than the amount of folds
-s_AmountSignTH = min(s_AmountSignTH,s_k)
-
-
-
-# check if phenotypic dataframe is added
-if(!is.null(dim(s_PhenoDataFrame)[1])){
-
-	# make sure s_PhenoDataFrame is dataframe
-	s_PhenoDataFrame = as.data.frame(s_PhenoDataFrame)
-
-	message(paste0("Using phenotypic dataframe for Class and covariates (if needed):\nMake sure rownames(dataset) and rownames(s_PhenoDataFrame) use the same identifiers!!\n"))
-	
-	# test if dataframe
-	if(!is.data.frame(s_PhenoDataFrame)){
-		#cat(paste0("Please check if s_PhenoDataFrame is a data.frame!\n"))
-		stop("Please check if s_PhenoDataFrame is a data.frame!\n")
-	}
-	
-	if(!"Class"%in%colnames(s_PhenoDataFrame)){
-		stop("No 'Class' found in colnames s_PhenoDataFrame")
-	}
-	
-	#SampleOrder = match(rownames(dataset), rownames(s_PhenoDataFrame))[!is.na(match(rownames(dataset), rownames(s_PhenoDataFrame)))]
-	#s_PhenoDataFrame = s_PhenoDataFrame[SampleOrder,]
-	#
-	#SampleOrder2 = match(rownames(s_PhenoDataFrame), rownames(dataset))[!is.na(match(rownames(s_PhenoDataFrame), rownames(dataset)))]
-	
-	
-	# get the linking column between dataset and pheno
-	IdNameColInPhenoDF = names(which(lapply(s_PhenoDataFrame,FUN = function(X){sum(as.character(rownames(dataset))%in%as.character(X))})>0)[1])
-	
-	# print found linker
-	message(paste0("Found column '",IdNameColInPhenoDF,"' as universal linker between pheno and data\n"))
-	
-	# Add the linker to rownames of frame, this is required for temp_design
-	rownames(s_PhenoDataFrame) = as.character(s_PhenoDataFrame[[IdNameColInPhenoDF]])
-
-	# Select class data based on phenotype PATNO
-	if(sum(colnames(dataset)=="Class")==1){
-		dataset$Class = s_PhenoDataFrame$Class[match(x=rownames(dataset),s_PhenoDataFrame[[IdNameColInPhenoDF]])]
+	# Check if blocking variable is found, then do set s_Limma_option and block for 
+	if(is.na(s_block_coef)){
+		s_Limma_option = 1
 		}else{
-		dataset = data.frame(dataset, Class = s_PhenoDataFrame$Class[match(x=rownames(dataset),s_PhenoDataFrame[[IdNameColInPhenoDF]])])
-	}
-	
-	# match s_PhenoDataFrame to dataset; as s_PhenoDataFrame is bigger and thus has different positions for Trainindex
-	s_PhenoDataFrame = s_PhenoDataFrame[match(rownames(dataset),rownames(s_PhenoDataFrame)),]
-
-}
-
-## packages
-#library(ggfortify)
-#library(caret)
-#library(limma)
-#library(tidyverse)
-#library(ggsci)
-#library(showtext)
-
-#-----------------------------------------------------------------------------------------------------#
-#							Print settings
-#-----------------------------------------------------------------------------------------------------#
-
-if(s_Verbose){
-	message(paste0("Starting KDEA using:"))
-	message(paste0("    Using formula: ",if(is.na(s_CovFormula)){"~Class"}else{s_CovFormula} ,""))
-	message(paste0("    Resamplefraction: ",s_partitionlength ,""))
-	message(paste0("    Folds: ",s_k ,""))
-	message(paste0("    Pval TH: ",s_pvalTH ,""))
-	#cat(paste0("LogFC TH: ",s_logFCTH ,"\n")) # automated now
-	message(paste0("    Amount Sign TH: ",s_AmountSignTH ,""))
-}
-
-#-----------------------------------------------------------------------------------------------------#
-#							NAs + numeric
-#-----------------------------------------------------------------------------------------------------#
-
-if(s_omitNA){
-	dataset = na.omit(dataset)
-}
-
-#-----------------------------------------------------------------------------------------------------#
-#							INITIAL DATA CLASS check
-#-----------------------------------------------------------------------------------------------------#
-
-# class processing; find class column OR ID
-if(length(which(names(dataset)=="Class"))==0){
-
-	if(is.na(f_dataset_class_column_id)){
-		stop("Please enter Class column ID")
-		}else{
-		names(dataset)[f_dataset_class_column_id] = "Class"
-	}
-}else{
-	f_dataset_class_column_id = which(names(dataset)=="Class")
-}
-	
-Class = as.factor(as.character(dataset[,f_dataset_class_column_id]))
-
-
-#-----------------------------------------------------------------------------------------------------#
-#							INITIAL DATA SPLITTING/RANDOMISATION
-#-----------------------------------------------------------------------------------------------------#
-set.seed(42)
-FoldSamples = caret::createDataPartition(Class, p = s_partitionlength, list = FALSE, times = s_k)
-res_super = list()
-res_super_raw = list()
-CounterOneTimeOnly = 0
-
-if(is.na(s_CovFormula)){
-# switch to intercept design, because other was not appropiate...
-	s_CovFormula = "~Class"
-}
-		
-
-# start fold loop
-pb <- progress:: progress_bar$new(
-  format = "    Testing folds [:bar] :percent eta: :eta",
-  total = s_k, clear = FALSE, width= 60)
-for( i in 1:s_k){
-
-	#-----------------------------------------------------------------------------------------------------#
-	#							Select data
-	#-----------------------------------------------------------------------------------------------------#
-	Trainindex = FoldSamples[,i]
-
-	#-----------------------------------------------------------------------------------------------------#
-	#							LIMMA
-	#-----------------------------------------------------------------------------------------------------#
-
-	# Make contrasts based on "~Class" or used defined
-	# if a pheno DF os given:
-	if(!is.null(dim(s_PhenoDataFrame)[1])){
-		
-		temp_design <- model.matrix(as.formula(s_CovFormula), data = s_PhenoDataFrame[Trainindex,])
-
-		}else{
-		
-		temp_design <- model.matrix(as.formula(s_CovFormula), data = dataset[Trainindex,])
-	}
-
-	# Create a linear model based on the groups
-	temp_fit <- limma::lmFit(t(dataset[Trainindex,-f_dataset_class_column_id]), temp_design)
-
-	# Emperical bayes
-	temp_fit <- limma::eBayes(temp_fit)
-	
-	# extract results
-	if(colnames(temp_fit)[1]=="(Intercept)"){
-		temp_results = limma::topTable(temp_fit, coef =2, adjust="BH",num=Inf)
-	}else{
-		temp_results = limma::topTable(temp_fit, adjust="BH",num=Inf)
-	}
-	
-	
-
-	# Check if the focus unchanged, than find the "Class" column.
-	if(is.na(s_CovOfImportance)){
-		if(s_CovFormula=="~Class"){
-			s_CovOfImportance = which(names(temp_results)=="logFC")
+		if(!is.null(s_PhenoDataFrame )){
+			s_Limma_option = 2
 			}else{
-			s_CovOfImportance = which(names(temp_results)=="Class")
-			if(is.na(s_CovOfImportance[1])){
-				s_CovOfImportance=1
-				message(paste0(" !  s_CovOfImportance is FORCED to: ",s_CovOfImportance,"\n"," !    This results in cov: ",names(temp_results)[s_CovOfImportance],"\n"," >    Please consider setting the s_CovOfImportance",""))
-			}
+			stop("\n >>> Please check if s_PhenoDataFrame is added to extract the blocking variable! <<< \n")
 		}
-		CounterOneTimeOnly = 1
+		
+	}
+
+	# it cannot be more significant (number of times) than the amount of folds
+	s_AmountSignTH = min(s_AmountSignTH,s_k)
+
+	# check if phenotypic dataframe is added
+	if(!is.null(s_PhenoDataFrame )){
+
+		# make sure s_PhenoDataFrame is dataframe
+		s_PhenoDataFrame = as.data.frame(s_PhenoDataFrame)
+
+		message(paste0("Using phenotypic dataframe for Class and covariates (if needed):\nMake sure rownames(dataset) and rownames(s_PhenoDataFrame) use the same identifiers!!\n"))
+		
+		# test if dataframe
+		if(!is.data.frame(s_PhenoDataFrame)){
+			#cat(paste0("Please check if s_PhenoDataFrame is a data.frame!\n"))
+			stop("\n >>> Please check if s_PhenoDataFrame is a data.frame! <<< \n")
+		}
+		
+		if(!"Class"%in%colnames(s_PhenoDataFrame)){
+			stop("\n >>> No 'Class' found in colnames s_PhenoDataFrame <<< \n")
+		}
+			
+		# get the linking column between dataset and pheno
+		IdNameColInPhenoDF = names(which(lapply(s_PhenoDataFrame,FUN = function(X){sum(as.character(rownames(dataset))%in%as.character(X))})>0)[1])
+		
+		# print found linker
+		message(paste0("Found column '",IdNameColInPhenoDF,"' as universal linker between pheno and data\n"))
+		
+		# Add the linker to rownames of frame, this is required for temp_design
+		rownames(s_PhenoDataFrame) = as.character(s_PhenoDataFrame[[IdNameColInPhenoDF]])
+
+		# Select class data based on phenotype PATNO
+		if(sum(colnames(dataset)=="Class")==1){
+			dataset$Class = s_PhenoDataFrame$Class[match(x=rownames(dataset),s_PhenoDataFrame[[IdNameColInPhenoDF]])]
+			}else{
+			dataset = data.frame(dataset, Class = s_PhenoDataFrame$Class[match(x=rownames(dataset),s_PhenoDataFrame[[IdNameColInPhenoDF]])])
+		}
+		
+		# match s_PhenoDataFrame to dataset; as s_PhenoDataFrame is bigger and thus has different positions for Trainindex
+		s_PhenoDataFrame = s_PhenoDataFrame[match(rownames(dataset),rownames(s_PhenoDataFrame)),]
+
+	}
+
+	#-----------------------------------------------------------------------------------------------------#
+	#							Print settings
+	#-----------------------------------------------------------------------------------------------------#
+
+	if(s_Verbose){
+		message(paste0("Starting KDEA using:"))
+		message(paste0("    Using formula: ",if(is.na(s_CovFormula)){"~Class"}else{s_CovFormula} ,""))
+		message(paste0("    Resamplefraction: ",s_partitionlength ,""))
+		message(paste0("    Folds: ",s_k ,""))
+		message(paste0("    Pval TH: ",s_pvalTH ,""))
+		#cat(paste0("LogFC TH: ",s_logFCTH ,"\n")) # automated now
+		message(paste0("    Amount Sign TH: ",s_AmountSignTH ,""))
+
+		# if blocking show what
+		if(!is.na(s_block_coef)){
+			message(paste0("    Blocking: ",length(table(s_PhenoDataFrame[,s_block_coef]))," entities"))
+		}
+
+		if(s_stratifiedsampling){
+			message(paste0("    Using stratified sampling coefs: ",paste0(all.vars(as.formula(s_CovFormula)),collapse = ", ") ,""))
+		}
+		
+	}
+
+
+	#-----------------------------------------------------------------------------------------------------#
+	#							NAs + numeric + Data.table
+	#-----------------------------------------------------------------------------------------------------#
+	if(s_omitNA){
+		dataset = na.omit(dataset)
+	}
+
+
+	#-----------------------------------------------------------------------------------------------------#
+	#							INITIAL DATA CLASS check
+	#-----------------------------------------------------------------------------------------------------#
+
+	# class processing; find class column OR ID
+	if(length(which(names(dataset)=="Class"))==0){
+
+		if(is.na(f_dataset_class_column_id)){
+			stop("\n >>> Please enter Class column ID <<< \n")
+			}else{
+			names(dataset)[f_dataset_class_column_id] = "Class"
+		}
 	}else{
-		# Check if the focus is shifted to "Class" or to another covariate; print these results.
-		if(CounterOneTimeOnly==0){
-			if(s_Verbose){
-				message(paste0("    s_CovOfImportance is set to: ",s_CovOfImportance,"\n","    This results in cov: ",names(temp_results)[s_CovOfImportance],""))
+		f_dataset_class_column_id = which(names(dataset)=="Class")
+	}
+		
+	Class = as.factor(as.character(dataset[,f_dataset_class_column_id]))
+
+
+	#-----------------------------------------------------------------------------------------------------#
+	#							INITIAL DATA SPLITTING/RANDOMISATION
+	#-----------------------------------------------------------------------------------------------------#
+	res_super = list()
+	res_super_raw = list()
+	CounterOneTimeOnly = 0
+
+	if(is.na(s_CovFormula)){
+	# switch to intercept design, because other was not appropiate...
+		s_CovFormula = "~Class"
+	}
+
+	set.seed(42)
+	# Strietified option
+	if(!s_stratifiedsampling){
+		FoldSamples = caret::createDataPartition(Class, p = s_partitionlength, list = FALSE, times = s_k)
+		
+	}else{
+		stop("\n >>> @RRR Stratified sampling needs to be fixed, please turn 's_stratifiedsampling' to FALSE <<< \n")
+		FoldSamples = sapply(1:s_k,function(x){which(rownames(s_PhenoDataFrame) %in% splitstackshape::stratified(indt = s_PhenoDataFrame, 
+		c(all.vars(as.formula(s_CovFormula))),size = s_partitionlength,keep.rownames = TRUE)$rn)})
+		
+		if(s_Verbose){
+			message(paste0("    Foldsamples dimention: ",paste0(dim(FoldSamples),collapse = " x ") ,""))
+		}
+	}		
+
+	#-----------------------------------------------------------------------------------------------------#
+	#							duplicateCorrelation Estimation for BLOCKING
+	#-----------------------------------------------------------------------------------------------------#
+	if(!is.na(s_block_coef )){
+		# start duplicatecorrelation progressbar
+		pb <- progress:: progress_bar$new(
+		format = "    Estimating duplicatecorrelation [:bar] :percent eta: :eta",
+		total = s_n_reps, clear = FALSE, width= 60)
+
+		if(s_Verbose){
+			#message(paste0("    Using ",s_n_reps," repeats and ",s_n_features," samples in duplicatecorrelation"))
+			message(paste0("    Duplicatecorrelation n repeats: ",s_n_reps))
+			message(paste0("    Duplicatecorrelation n samples: ",s_n_features))
+		}
+
+		# BLOCKING out of loop estimator
+		# This is a partial information leak, but likely not critical as only consensus correlation is used
+		# fast estimate conesnsus
+		# into arguments
+		#s_n_reps = min(25,max(floor(sqrt(dim(dataset)[2])),10)) # min 10, max 25; compensating for low nsamples to get bigger resampling, works and tested; max 100; min related to amount of features
+		#s_n_features = max(10,floor(length(Trainindex)*0.5)) # nsamples min is 10, the more the better; takes 50 percent!
+
+		#cat("\n      Fast estimating consensus for duplicatecorrelation\n")
+		#cat(paste0("\n      Using: ",s_n_reps," repeats x ",s_n_features," samples\n"))
+
+		# This part takes most of the time in this part of the function. (testing folds)
+		# due to duplicaeCorrelation being slow!
+		a = na.omit(sapply(rep(s_n_features,s_n_reps),
+			function(p){
+				sample_set = sample(x = 1:dim(dataset)[2],p)
+				loop_object = t(dataset[,sample_set])
+				loop_design = model.matrix(as.formula(s_CovFormula),s_PhenoDataFrame)
+				loop_block = s_PhenoDataFrame[,s_block_coef]
+
+				
+				# up the pb
+				pb$tick()
+
+				return(limma::duplicateCorrelation( object = loop_object, design = loop_design, block=loop_block)$consensus)
 			}
-			CounterOneTimeOnly = 1
+		))
+		#plot(a)
+		#abline(h= median(a));median(a)
+		Dup_correlation_consensus_median = median(a)
+
+		# print stats
+		if(s_Verbose){
+			message(paste0("    Duplicatecorrelation estimate median (IQR): ",round(Dup_correlation_consensus_median,3) ," (",round(IQR(a),3)),")")
 		}
 	}
-	
-	# Store all results of fold [i] into super object using predefined structure
-	res_super[[i]] = data.frame(names = rownames(temp_results),FC = temp_results[,s_CovOfImportance], Pval = temp_results$P.Value,stringsAsFactors=FALSE)
-	
-	
-	# Store all results of fold [i] into super object using predefined structure
-	res_super_raw[[i]] = temp_results
-	
-	# up the pb
-	pb$tick()
-}
-
-#-----------------------------------------------------------------------------------------------------#
-#							process dataframe for ranks and plot
-#-----------------------------------------------------------------------------------------------------#
-# Get all superresult runs
-
-df=data.frame(res_super[[1]])
-for(i in 2:s_k){
-	df = rbind(df,res_super[[i]])
-}
-
-df$Pval = round(df$Pval,6)
-
-vals = -log10(df$Pval)
-df$Pval = vals
 
 
-# Create secific data for result (medians of FC and Pval)
-RankedOrderedData = data.frame(FeatureName = NA,MedianLogFC = NA,MedianLog10Pval = NA,MeanLogFC=NA,SDLogFC=NA)
-temp = df
-uniquenames = unique(df$names)
+	# start fold loop progressbar
+	pb <- progress:: progress_bar$new(
+	format = "    Testing folds [:bar] :percent eta: :eta",
+	total = s_k, clear = FALSE, width= 60)
 
-# find all unique names in temp, and give them a number
-MatchedIndex <<- match(uniquenames,x=temp$names)
-
-#create lists based on unique names
-temp_lists1 = vector(mode = "list", length = length(uniquenames))
-
-#parLapply, extract all locations in specific number (name)
-#
-#temp_max_cores = min(s_maxCPUCores,(parallel::detectCores()-1))
-#		cl <- parallel::makePSOCKcluster(max(1,temp_max_cores))
-#		
-#		
-#	cores = parallel::detectCores()
-#	cores = min(s_maxCPUCores,(cores-1))
-#	cl <- parallel::makeCluster(cores) #not to overload computer
-#
-#	parallel::clusterExport(cl, "MatchedIndex")
-#
-#	temp_lists1 = parallel::parLapply(cl,1:length(uniquenames),function(i){
-#		which(MatchedIndex==i)
-#	})
-#
-#	#stop cluster
-#	parallel::stopCluster(cl)
+	for( i in 1:s_k){
 
 
-pb <- progress:: progress_bar$new(
-  format = "    Collecting results [:bar] :percent eta: :eta",
-  total = length(uniquenames), clear = FALSE, width= 60)
-  pb$tick(0)
-  
-for( i in 1:length(uniquenames)){
-	temp_lists1[[i]] = which(MatchedIndex==i)
-	pb$tick()
-}
-
-pb <- progress:: progress_bar$new(
-  format = "    Calculating result metrics [:bar] :percent eta: :eta",
-  total = 7, clear = FALSE, width= 60)
-  pb$tick(0)
-  
-# per unique name locations, get these 
-temp_lists = vector(mode = "list", length = length(uniquenames))
-temp_lists = lapply(temp_lists1,function(x){
-	temp[x,]
-})
-pb$tick()
-
-FeatureName = lapply(temp_lists,function(x){x[1,1]});pb$tick()
-MedianLogFC = lapply(temp_lists,function(x){median(x[,2])});pb$tick()
-MedianLog10Pval = lapply(temp_lists,function(x){median(x[,3])});pb$tick()
-
-MeanLogFC = lapply(temp_lists,function(x){mean(x[,2])});pb$tick()
-SDLogFC = lapply(temp_lists,function(x){sd(x[,2])});pb$tick()
-IQRLogFC = lapply(temp_lists,function(x){IQR(x[,2])});pb$tick()
-
-RankedOrderedData = data.frame(FeatureName = unlist(FeatureName),MedianLogFC = unlist(MedianLogFC),MedianLog10Pval = unlist(MedianLog10Pval),MeanLogFC=unlist(MeanLogFC),SDLogFC=unlist(SDLogFC),IQRLogFC = unlist(IQRLogFC))
-
-#for(i in 1:length(uniquenames)){
-#	#tempIndex = temp$names==uniquenames[i]
-#	tempdf = temp_lists[[i]]
-#	 
-#	RankedOrderedData[i,] = #data.frame(FeatureName=uniquenames[i],MedianLogFC=as.numeric(median(tempdf$FC)),Medi#anLog10Pval=as.numeric(median(tempdf$Pval)))
-#	
-#	print(i)
-#
-#}
+		#-----------------------------------------------------------------------------------------------------#
+		#							Select data
+		#-----------------------------------------------------------------------------------------------------#
+		Trainindex = FoldSamples[,i]
 
 
+		#-----------------------------------------------------------------------------------------------------#
+		#							LIMMA OPTION 2
+		#							BLOCKing
+		#-----------------------------------------------------------------------------------------------------#
+		if(s_Limma_option == 2){
+			# check if i have all items needed to run the normal limma route
+			# @RRR check s_block_coef is not NA
+
+			# Make contrasts based on "~Class" or used defined
+			# if a pheno DF os given:
+			if(!is.null(s_PhenoDataFrame )){
+				
+				temp_design <- model.matrix(as.formula(s_CovFormula), data = s_PhenoDataFrame[Trainindex,])
+
+				}else{
+				
+				temp_design <- model.matrix(as.formula(s_CovFormula), data = dataset[Trainindex,])
+			}
+
+			#plot(a)
+			#cat(paste0("\n      Duplicatecorrelation estimated at: ",round(Dup_correlation_consensus_median,4),"\n"))
+
+			# Create a linear model based on the groups
+			temp_fit <- limma::lmFit(t(dataset[Trainindex,-f_dataset_class_column_id]), temp_design, block = s_PhenoDataFrame[Trainindex,s_block_coef], correlation = Dup_correlation_consensus_median)
+
+			# Emperical bayes
+			temp_fit <- limma::eBayes(temp_fit)
+			
+			# extract results
+			if(colnames(temp_fit)[1]=="(Intercept)"){
+				temp_results = limma::topTable(temp_fit, coef =2, adjust="BH",num=Inf)
+			}else{
+				temp_results = limma::topTable(temp_fit, adjust="BH",num=Inf)
+			}
+			
+			# Check if the focus unchanged, than find the "Class" column.
+			if(is.na(s_CovOfImportance)){
+				if(s_CovFormula=="~Class"){
+					s_CovOfImportance = which(names(temp_results)=="logFC")
+					}else{
+					s_CovOfImportance = which(names(temp_results)=="Class")
+					if(is.na(s_CovOfImportance[1])){
+						s_CovOfImportance=1
+						message(paste0(" !  s_CovOfImportance is FORCED to: ",s_CovOfImportance,"\n"," !      This results in cov: ",names(temp_results)[s_CovOfImportance],"\n"," >    Please consider setting the s_CovOfImportance",""))
+					}
+				}
+				CounterOneTimeOnly = 1
+			}else{
+				# Check if the focus is shifted to "Class" or to another covariate; print these results.
+				if(CounterOneTimeOnly==0){
+					if(s_Verbose){
+						message(paste0("    s_CovOfImportance is set to: ",s_CovOfImportance,"\n","      This results in cov: ",names(temp_results)[s_CovOfImportance],""))
+					}
+					CounterOneTimeOnly = 1
+				}
+			}
+			
+			# Store all results of fold [i] into super object using predefined structure
+			res_super[[i]] = data.frame(names = rownames(temp_results),FC = temp_results[,s_CovOfImportance], Pval = temp_results$P.Value,stringsAsFactors=FALSE)
+			
+			# Store all results of fold [i] into super object using predefined structure
+			res_super_raw[[i]] = list(toptable = temp_results, s2post = temp_fit$s2.post)
+			
+			# up the pb
+			pb$tick()
+
+		} # End limma option 2 (Blocking)
+
+		#-----------------------------------------------------------------------------------------------------#
+		#							LIMMA OPTION 1
+		#							Normal
+		#-----------------------------------------------------------------------------------------------------#
+		if(s_Limma_option == 1){
+			# Make contrasts based on "~Class" or used defined
+			# if a pheno DF os given:
+			if(!is.null(s_PhenoDataFrame )){
+				
+				temp_design <- model.matrix(as.formula(s_CovFormula), data = s_PhenoDataFrame[Trainindex,])
+
+				}else{
+				
+				temp_design <- model.matrix(as.formula(s_CovFormula), data = dataset[Trainindex,])
+			}
+
+			# Create a linear model based on the groups
+			temp_fit <- limma::lmFit(t(dataset[Trainindex,-f_dataset_class_column_id]), temp_design)
+
+			# Emperical bayes
+			temp_fit <- limma::eBayes(temp_fit)
+			
+			# extract results
+			if(colnames(temp_fit)[1]=="(Intercept)"){
+				temp_results = limma::topTable(temp_fit, coef =2, adjust="BH",num=Inf)
+			}else{
+				temp_results = limma::topTable(temp_fit, adjust="BH",num=Inf)
+			}
+			
+			# Check if the focus unchanged, than find the "Class" column.
+			if(is.na(s_CovOfImportance)){
+				if(s_CovFormula=="~Class"){
+					s_CovOfImportance = which(names(temp_results)=="logFC")
+					}else{
+					s_CovOfImportance = which(names(temp_results)=="Class")
+					if(is.na(s_CovOfImportance[1])){
+						s_CovOfImportance=1
+						message(paste0(" !  s_CovOfImportance is FORCED to: ",s_CovOfImportance,"\n"," !    This results in cov: ",names(temp_results)[s_CovOfImportance],"\n"," >    Please consider setting the s_CovOfImportance",""))
+					}
+				}
+				CounterOneTimeOnly = 1
+			}else{
+				# Check if the focus is shifted to "Class" or to another covariate; print these results.
+				if(CounterOneTimeOnly==0){
+					if(s_Verbose){
+						message(paste0("    s_CovOfImportance is set to: ",s_CovOfImportance,"\n","    This results in cov: ",names(temp_results)[s_CovOfImportance],""))
+					}
+					CounterOneTimeOnly = 1
+				}
+			}
+			
+			# Store all results of fold [i] into super object using predefined structure
+			res_super[[i]] = data.frame(names = rownames(temp_results),FC = temp_results[,s_CovOfImportance], Pval = temp_results$P.Value,stringsAsFactors=FALSE)
+			
+			# Store all results of fold [i] into super object using predefined structure
+			res_super_raw[[i]] = temp_results
+			
+			# up the pb
+			pb$tick()
+
+		} # End limma option 1 (standard)
+
+	} # End fold loop
 
 
-#setup parallel backend to use many processors
-#cores=parallel::detectCores()
-#cl <- parallel::makeCluster(cores[1]-1) #not to overload your computer
-#doParallel::registerDoParallel(cl)
-#
-#RankedOrderedData <- foreach::foreach(i=1:length(unique(df$names)), #.combine=rbind) %dopar% {
-#  
-#	FeatureName = unique(df$names)[i]
-#  
-#	temp_1 = df[df$names==FeatureName,]
-#    
-#	MedianLogFC = median(temp_1$FC)
-#	
-#	MedianLog10Pval = median(temp_1$Pval)
-#  
-#	tempMatrix = data.frame(FeatureName = FeatureName, MedianLogFC = #MedianLogFC,MedianLog10Pval=MedianLog10Pval)
-#	
-#	#tempMatrix = c(Featurename,MedianLogFC,MedianLog10Pval)
-#
-#   tempMatrix #Equivalent to finalMatrix = rbind(finalMatrix, tempMatrix)
-#}
-##stop cluster
-#parallel::stopCluster(cl)
-#
-#
-## Create secific data for result (medians of FC and Pval)
-#RankedOrderedData = #data.frame(FeatureName=unique(df$names),MedianLogFC=NA,MedianLog10Pval=NA)
+	#-----------------------------------------------------------------------------------------------------#
+	#							Prepare for results extraction
+	#-----------------------------------------------------------------------------------------------------#
+	# Get all superresult runs
+	df=data.frame(res_super[[1]])
+	for(i in 2:s_k){
+		df = rbind(df,res_super[[i]])
+	}
+
+
+	# round pvalues (max significance to 6)
+	df$Pval = round(df$Pval,6)
+
+	# make interpretable
+	vals = -log10(df$Pval)
+	df$Pval = vals
+
+	# Make any pvalue that is infinite to the highest Pvalue observed
+	df$Pval[is.infinite(df$Pval)] = max(df$Pval[!is.infinite(df$Pval)])
 
 
 
-#-----------------------------------------------------------------------------------------------------#
-#							RANKS
-#-----------------------------------------------------------------------------------------------------#
-# Calculate the amount of times to be observed significant, 
-RankValue_Pval = rank(-abs(RankedOrderedData$MedianLog10Pval))
+	# Create secific data for result (medians of FC and Pval)
+	RankedOrderedData = data.frame(FeatureName = NA,MedianLogFC = NA,MedianLog10Pval = NA,MeanLogFC=NA,SDLogFC=NA)
+	temp = df
+	uniquenames = unique(df$names)
 
-# this works out, median is approximation of pop; should be included
-RankValue_LogFC = rank(-abs(RankedOrderedData$MedianLogFC))
+	# find all unique names in temp, and give them a number
+	MatchedIndex <<- match(uniquenames,x=temp$names)
 
-# this works out, median is approximation of pop; should be included
-RankValue_LogFC_mean = rank(-abs(RankedOrderedData$MeanLogFC))
+	#-----------------------------------------------------------------------------------------------------#
+	#							Extract result from all folds and calculates stats
+	# 							Data.table is amazing
+	#-----------------------------------------------------------------------------------------------------#
+	# Convert 'temp' to a data.table
+	temp2 <- as.data.table(temp)
 
-# this works out, median is approximation of pop; should be included
-RankValue_LogFC_SD = rank(-abs(RankedOrderedData$SDLogFC))
+	# make pb for Collecting results
+	pb <- progress:: progress_bar$new(
+	format = "    Collecting results [:bar] :percent eta: :eta",
+	total = length(uniquenames), clear = FALSE, width= 60)
+	pb$tick(0)
 
+	# Group by MatchedIndex and calculate the desired statistics
+	# This. is. speed. (from 8 hours to 10 minutes)
+	RankedOrderedData <- temp2[, {pb$tick(); .(MedianLogFC = median(FC),
+								MedianLog10Pval = median(Pval),
+								MeanLogFC = mean(FC),
+								SDLogFC = sd(FC),
+								IQRLogFC = IQR(FC))},
+							by = .(FeatureName = names, MatchedIndex),]
 
-# combine the ranks
-RankValue_Combined = (RankValue_Pval+RankValue_LogFC)
-
-# Best estimation; Small spread (IQR). high logFC. high sign.
-RankValue_bestRank = rank(RankedOrderedData$IQRLogFC) + rank(-abs(RankedOrderedData$MeanLogFC)) + rank(-RankedOrderedData$MedianLog10Pval)
-
-
-
-# Put in object
-RankedOrderedData$RankLogFC = RankValue_LogFC
-RankedOrderedData$RankLog10Pval = RankValue_Pval
-RankedOrderedData$RankCombined = RankValue_Combined
-RankedOrderedData$RankValue_LogFC_mean = RankValue_LogFC_mean
-RankedOrderedData$RankValue_LogFC_SD = RankValue_LogFC_SD
-RankedOrderedData$Best_Rank = RankValue_bestRank
-
-# reorder object
-RankedOrderedData = RankedOrderedData[order(RankedOrderedData$Best_Rank,rank(RankedOrderedData$IQRLogFC),rank(-abs(RankedOrderedData$MeanLogFC)),rank(-RankedOrderedData$MedianLog10Pval)),]
+	# Optionally, if you want to keep unique rows based on MatchedIndex, you can use:
+	RankedOrderedData <- unique(RankedOrderedData, by = "MatchedIndex")
 
 
 
-#-----------------------------------------------------------------------------------------------------#
-#							Plot
-#-----------------------------------------------------------------------------------------------------#
-# Set data in format
+	#-----------------------------------------------------------------------------------------------------#
+	#							Calculate RANKS
+	#-----------------------------------------------------------------------------------------------------#
+	# Calculate the amount of times to be observed significant, 
+	RankValue_Pval = rank(-abs(RankedOrderedData$MedianLog10Pval))
+
+	# this works out, median is approximation of pop; should be included
+	RankValue_LogFC = rank(-abs(RankedOrderedData$MedianLogFC))
+
+	# this works out, median is approximation of pop; should be included
+	RankValue_LogFC_mean = rank(-abs(RankedOrderedData$MeanLogFC))
+
+	# this works out, median is approximation of pop; should be included
+	RankValue_LogFC_SD = rank(-abs(RankedOrderedData$SDLogFC))
+
+	# combine the ranks
+	RankValue_Combined = (RankValue_Pval+RankValue_LogFC)
+
+	# Best estimation; Small spread (IQR). high logFC. high sign.
+	RankValue_bestRank = rank(RankedOrderedData$IQRLogFC) + rank(-abs(RankedOrderedData$MeanLogFC)) + rank(-RankedOrderedData$MedianLog10Pval)
+
+	# Put in object
+	RankedOrderedData$RankLogFC = RankValue_LogFC
+	RankedOrderedData$RankLog10Pval = RankValue_Pval
+	RankedOrderedData$RankCombined = RankValue_Combined
+	RankedOrderedData$RankValue_LogFC_mean = RankValue_LogFC_mean
+	RankedOrderedData$RankValue_LogFC_SD = RankValue_LogFC_SD
+	RankedOrderedData$Best_Rank = RankValue_bestRank
+
+	# reorder object
+	RankedOrderedData = RankedOrderedData[order(RankedOrderedData$Best_Rank,rank(RankedOrderedData$IQRLogFC),rank(-abs(RankedOrderedData$MeanLogFC)),rank(-RankedOrderedData$MedianLog10Pval)),]
+
+
+	#-----------------------------------------------------------------------------------------------------#
+	#							Plot
+	#-----------------------------------------------------------------------------------------------------#
+	# Set data in format
 	# at least (unlikly)
 	df_f = df[df$Pval>-log10(s_pvalTH),]  
-	
-	
+
 	if(is.na(s_logFCTH)){
 		s_logFCTH = quantile(abs(df_f$FC),0.5)
 	}
-	
+
 	# minimal logFC
 	if(s_showall != TRUE){
 		df_f = df_f[abs(df_f$FC)>s_logFCTH,]  
@@ -441,13 +535,13 @@ RankedOrderedData = RankedOrderedData[order(RankedOrderedData$Best_Rank,rank(Ran
 		df_f = df_f[df_f$names%in%RankedOrderedData$FeatureName[1:max(ceiling(length(RankedOrderedData$Best_Rank) * 0.1),3)],]
 	}
 	#unique(df_f$names)
-	
+
 	# getthe features and get the nonsignificant as well
 	df_f = df[df$names%in%unique(df_f$names),]
-	
+
 	#### CHECK ####
 	if(dim(df_f)[1]==0){
-	
+
 		# gather all settings and dump in var for reproducebility
 		allSettings  = ls(pattern="^s_")
 		s_settings = NA
@@ -462,10 +556,10 @@ RankedOrderedData = RankedOrderedData[order(RankedOrderedData$Best_Rank,rank(Ran
 		}
 		s_settings = temp
 		rm(temp)
-	
+
 		warning("No significant values to present, increase s_pvalTH")
 		out=list(Rankobject = RankedOrderedData, Plot=NA, PlotFeatures = NA, res_super = res_super, Rawdata = df, RawLimmaRes = res_super_raw, formula = s_CovFormula, design = temp_design, settings = s_settings)
-		return(out)
+		
 	}else{
 		# check if plot needs to be made
 		if(s_MakePlot){
@@ -490,14 +584,18 @@ RankedOrderedData = RankedOrderedData[order(RankedOrderedData$Best_Rank,rank(Ran
 			#)+
 			ggplot2::scale_fill_gradientn(
 			name="Significance\n-log10(P-value)",
-				colours		= c("gray70","gray70","yellow","red"),
+				colours		= c("gray70","gray70","yellow","yellow","red"),
 				#space		= "Lab",
-				 #high		= "blue",
-				 #low		= "yellow",
-				 #limits 	= c(-log10(0.05), 5),
-				 na.value	= "gray50",
-				 values   	= c(0,((-log10(0.05)-0.000000001)-min(df_f$Pval))/(max(df_f$Pval)-min(df_f$Pval)),(-log10(0.05)-min(df_f$Pval))/(max(df_f$Pval)-min(df_f$Pval)),1),#,values   	= c(0,-log10(0.05)/5,5/5)#, (min(df_f$Pval)-min(df_f$Pval))/(max(df_f$Pval)-min(df_f$Pval))
-				 breaks   	= round(c(-log10(0.05),2,3,4,max(df_f$Pval)),1)
+					#high		= "blue",
+					#low		= "yellow",
+					#limits 	= c(-log10(0.05), 5),
+					na.value	= "gray50",
+					values   	= c(0,
+								((-log10(0.05)-0.000000001)-min(df_f$Pval))/(max(df_f$Pval)-min(df_f$Pval)),
+								(-log10(0.05)-min(df_f$Pval))/(max(df_f$Pval)-min(df_f$Pval)),
+								((-log10(0.05)+0.1)-min(df_f$Pval))/(max(df_f$Pval)-min(df_f$Pval)),
+								1),#,values   	= c(0,-log10(0.05)/5,5/5)#, (min(df_f$Pval)-min(df_f$Pval))/(max(df_f$Pval)-min(df_f$Pval))
+					breaks   	= round(c(-log10(0.05),3,4,5,6),1)
 			)+
 			ggplot2::guides(
 				fill = guide_colourbar(barwidth = 10, barheight = 1,ticks.colour = "black", ticks.linewidth = 0.8)
@@ -580,7 +678,19 @@ RankedOrderedData = RankedOrderedData[order(RankedOrderedData$Best_Rank,rank(Ran
 			
 			out=list(Rankobject = RankedOrderedData, Plot=NA, PlotFeatures = NA, res_super = res_super, Rawdata = df, RawLimmaRes = res_super_raw, formula = s_CovFormula, design = temp_design, settings = s_settings)
 		}
-		return(out)
+		#class(out) = c("KDEA","list")
+		#return(out)
 	}
-		
+
+	# Stop timer
+	t1 = Sys.time()
+	
+	# show time
+	if(s_Verbose){
+		x = t1-t0
+		message(paste0("    Total running time: ", format(round(unclass(x),2), digits = getOption("digits")), " ", attr(x, "units"), "\n", sep = ""))
+	}
+
+	class(out) = c("KDEA","list")
+	return(out)
 }
