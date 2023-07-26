@@ -160,11 +160,11 @@ TableGrob (1 x 2) "arrange": 2 grobs
 ```
 
 And the resulted images:
-[ ![Typical PCA](/docs/RRFE_unsupervised.png)](/docs/RRFE_unsupervised.png)
+[ ![Typical PCA](/docs/Functions/RRFE_unsupervised.png)](/docs/Functions/RRFE_unsupervised.png)
 
 This image is a typical PCA on the data, showing the loadings as red arrows. Indicative that price dominated the dataset in scale, having 99.~% of the variance in component 1. 
 
-[ ![Optimised  PCA](/docs/RRFE_supervised.png)](/docs/RRFE_unsupervised.png) 
+[ ![Optimised  PCA](/docs/Functions/RRFE_supervised.png)](/docs/Functions/RRFE_unsupervised.png) 
 
 This image is a the supervised contrast on the data, showing the loadings as red arrows. Indicative that table and depth are critically important to "cat". Although the the combined variance is less than 1%, a clear pattern is visible using components 2 & 5.
 
@@ -172,6 +172,6 @@ Take note, the dataset is not scaled (z-normalised). This means every the weight
 
 If scaling is turned on (s_scale=TRUE), the weigths of features are equal and thus can be compared direcly. However, evaluate if this is a valid assumption that can be made.
 
-[ ![Diamond](/docs/diamond.png)](/docs/diamond.png) 
+[ ![Diamond](/docs/Functions/diamond.png)](/docs/Functions/diamond.png) 
 
 When evaluating the metrics table and depth it can be seen in the figure above that they are critical measures in the appearance of a diamond, and apparently the size of the (appearing) diamond is most important (who knew!).

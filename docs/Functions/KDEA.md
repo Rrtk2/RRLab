@@ -1,3 +1,5 @@
+| [HOME](https://github.com/Rrtk2/RRtest)  |  [FUNCTIONS](https://github.com/Rrtk2/RRtest/blob/master/docs/Functions/Functions/FunctionsOverview.md)  | 
+
 ### Leave-p-Out Cross-Validation Differential Expression Analysis (KDEA or LpO-CV-DEA)
 This algorithm randomly resamples the original dataset using only 80% of all samples for K folds. Each fold is processed using limma, Pvalues and LogFC is generated and stored. Median LogFC and amount of significant ocurrences are ranked and combined to a combined rank. An image is generated indicative of the variation and significance based on the collective DEA results. The Ranked features are resulted and the robust features from the image are resulted in a list.
 
@@ -167,16 +169,16 @@ $res_super[[10]]
 
 And the resulted images:
 
-[ ![KDEA result](/docs/KDEA.png)](/docs/KDEA.png)
+[ ![KDEA result](/docs/Functions/KDEA.png)](/docs/Functions/KDEA.png)
 
 
 This image indicated that between the groups "Fair" and "Ideal", price is the biggest difference (as expected). Also, table and depth are different in such a way that these are deemed robust features. Take note, this does not indicate causality as price is dependent on table and depth.
 
-[ ![Diamond](/docs/diamond.png)](/docs/diamond.png) 
+[ ![Diamond](/docs/Functions/diamond.png)](/docs/Functions/diamond.png) 
 
 When evaluating the results it can be seen in the figure above that they are critical measures in the appearance of a diamond. The size of the diamond and price are the biggest difference when comparing the catagories "Fair" and "Ideal". 
 
 #### Roadmap
-[ ![KDEA workflow](/docs/KDEA-roadmap.png)](/docs/KDEA-roadmap.png) 
+[ ![KDEA workflow](/docs/Functions/KDEA-roadmap.png)](/docs/Functions/KDEA-roadmap.png) 
 
 
