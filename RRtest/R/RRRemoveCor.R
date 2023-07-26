@@ -14,6 +14,9 @@
 #' @return Dataframe with modified values for correlated features.
 #' @examples
 #' Updated_iris = RRRemoveCor(iris[,-5])
+#' #Other example
+#' GGally::ggpairs(mtcars) # show pairs
+#' GGally::ggpairs(RRRemoveCor(mtcars)) # show updated pairs
 #' @export
 
 
