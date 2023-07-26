@@ -25,4 +25,7 @@ This function will result a modified dataframe, with updated values for the corr
 }
 \examples{
 Updated_iris = RRRemoveCor(iris[,-5])
+#Other example
+GGally::ggpairs(mtcars) # show pairs
+GGally::ggpairs(RRRemoveCor(mtcars)) # show updated pairs
 }
