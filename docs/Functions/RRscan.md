@@ -1,4 +1,10 @@
-#### RRscan (RR general characteristics of data scan)
+| [HOME](https://github.com/Rrtk2/RRtest)  |  [FUNCTIONS](https://github.com/Rrtk2/RRtest/blob/master/docs/Functions/FunctionsOverview.md)  | 
+
+# RRscan function
+(RR general characteristics of data scan)
+
+This is work in progress
+
 This function will evaluate all distribution properties per feature and per sample. Also detects potential outliers based on hclust, mean+sd, var+sd(var).
 
 An example using the mtcars dataset, trying to evaluate the characteristics.
