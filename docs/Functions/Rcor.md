@@ -1,9 +1,6 @@
 | [HOME](https://github.com/Rrtk2/RRtest)  |  [FUNCTIONS](https://github.com/Rrtk2/RRtest/blob/master/docs/Functions/FunctionsOverview.md)  | 
 
-Sure! Here's a GitHub Markdown file describing the `Rcor` function, providing an example, and showing the expected output:
-
-```markdown
-# Rcor
+# Rcor function
 
 ## Description
 This function, `Rcor`, takes a dataset with variables that can be transformed to numeric (not character) and computes the correlation matrix. It then applies a threshold (`th`) to shrink correlations below the cutoff to 0.
