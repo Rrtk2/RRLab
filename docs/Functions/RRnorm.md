@@ -1,7 +1,6 @@
 | [HOME](https://github.com/Rrtk2/RRtest)  |  [FUNCTIONS](https://github.com/Rrtk2/RRtest/blob/master/docs/Functions/FunctionsOverview.md)  | 
 
-```markdown
-# RRnorm
+# RRnorm function
 
 This R function normalizes a dataset and offsets/scales it if needed.
 
