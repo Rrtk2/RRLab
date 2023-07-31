@@ -36,6 +36,7 @@
 #' 
 #' @importFrom magrittr "%>%"
 #' @importFrom foreach `%dopar%`
+#' @importFrom plyr "."
 #' @examples
 #'
 #' Intended use
@@ -79,10 +80,10 @@ s_n_reps = min(25,max(floor(sqrt(dim(dataset)[2])),10)), s_n_features = max(10,f
 	t0 = Sys.time()
 
 	# get ggplot because it errors???
-	require(ggplot2)
+	#require(ggplot2)
 	# Require data table as it is needed later and i cant call the functions directly
-	require(data.table)
-	require(splitstackshape)
+	#library(data.table)
+	#require(splitstackshape)
 	#-----------------------------------------------------------------------------------------------------#
 	#							checks
 	#-----------------------------------------------------------------------------------------------------#
@@ -408,7 +409,7 @@ s_n_reps = min(25,max(floor(sqrt(dim(dataset)[2])),10)), s_n_features = max(10,f
 			}
 			
 			# Store all results of fold [i] into super object using predefined structure
-			res_super[[i]] = data.frame(names = rownames(temp_results),FC = temp_results[,s_CovOfImportance], Pval = temp_results$P.Value,stringsAsFactors=FALSE)
+			res_super[[i]] = data.frame(names = rownames(temp_results),FC = temp_results[,s_CovOfImportance], Pval = temp_results$P.Value, Fit_S2post = temp_fit$s2.post, stringsAsFactors=FALSE)
 			
 			# Store all results of fold [i] into super object using predefined structure
 			res_super_raw[[i]] = temp_results
