@@ -35,8 +35,6 @@
 #' @param s_n_features Used when blocking, number of samples used to fast estimate duplicatecorrelation(limma)
 #' 
 #' @importFrom magrittr "%>%"
-#' @importFrom foreach `%dopar%`
-#' @importFrom plyr "."
 #' @examples
 #'
 #' Intended use
@@ -76,6 +74,12 @@ KDEA = function(dataset = NA, f_dataset_class_column_id = NA, s_PhenoDataFrame =
 s_k = floor(sqrt(dim(dataset)[1])), s_AmountSignTH = floor(s_k*0.3), s_showall=FALSE, s_MakePlot=TRUE, s_Verbose=TRUE, s_pvalTH = 0.05, s_partitionlength = 0.5,
 s_n_reps = min(25,max(floor(sqrt(dim(dataset)[2])),10)), s_n_features = max(10,floor(length(s_partitionlength*dim(dataset)[1])*0.5)),s_omitNA = TRUE, s_stratifiedsampling = FALSE) {
 
+	# i have no idea how data.table does its operations using syntax with "." (like a[, .(mean = mean(V1))])
+	# But its absolutely essential its loaded. so seeting a check to get datatable (i know this is undesired but please show me how elsewise)
+	if (!"data.table" %in% .packages(all.available = TRUE)) {
+  		library("data.table")
+	}
+	
 	# start timer
 	t0 = Sys.time()
 
