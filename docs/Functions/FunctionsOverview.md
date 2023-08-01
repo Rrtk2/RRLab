@@ -6,6 +6,8 @@
 
 [RRFE](https://github.com/Rrtk2/RRtest/blob/master/docs/Functions/RRFE.md)
 
+[Idiogram](https://github.com/Rrtk2/RRtest/blob/master/docs/Functions/Idiogram.md)
+
 [MCC](https://github.com/Rrtk2/RRtest/blob/master/docs/Functions/MCC.md)
 
 [MCCx](https://github.com/Rrtk2/RRtest/blob/master/docs/Functions/MCCx.md)
