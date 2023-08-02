@@ -139,7 +139,12 @@ Idiogram = function(data_points, s_barwidth = 0.4, s_size_line = 1, s_alpha_line
     Chromosome_df$CentroXend = XposBars[,2]
 
     # relative number of CpGs found on chromosomes
-    data_points_df_relativeCpG = data_points_df[,data.table:::"[.data.table"(NumCpG = round(length(pvalue)/dim(data_points_df)[1]*100,2)),by = seqnames]
+    #data_points_df_relativeCpG = data_points_df[,.(NumCpG = round(length(pvalue)/dim(data_points_df)[1]*100,2),by = seqnames)]
+    data_points_df_relativeCpG =  data.frame( sapply(unique(data_points_df$seqnames),function(x){round(sum(data_points_df$seqnames == x)/dim(data_points_df)[1]*100,2)}))
+    data_points_df_relativeCpG$NumCpG = data_points_df_relativeCpG[,1]
+    data_points_df_relativeCpG$seqnames = rownames(data_points_df_relativeCpG)
+    data_points_df_relativeCpG = data_points_df_relativeCpG[,-1]
+
     #data_points_df_amountCpG = data_points_df[,.(NumCpG = length(pvalue)),by = seqnames]
     Chromosome_df$NumCpG  =  data_points_df_relativeCpG$NumCpG[match(Chromosome_df$seqnames,data_points_df_relativeCpG$seqnames)]
     #Chromosome_df$NumCpG  = paste0(format(Chromosome_df$NumCpG,2)," %")
