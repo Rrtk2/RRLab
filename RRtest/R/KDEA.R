@@ -34,6 +34,7 @@
 #' @param s_n_reps Used when blocking, amount of repeats to fast estimate duplicatecorrelation(limma)
 #' @param s_n_features Used when blocking, number of samples used to fast estimate duplicatecorrelation(limma)
 #' 
+#' @import data.table
 #' @importFrom magrittr "%>%"
 #' @examples
 #'
