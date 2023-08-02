@@ -13,7 +13,7 @@
 	for (i in s_requiredpackages) {
 		if (!requireNamespace(i, quietly = TRUE))
 			BiocManager::install(i, ask = F)  # dependencies = c("Depends", "Imports")
-		library(as.character(i), character.only = TRUE)
+		require(as.character(i), character.only = TRUE)
 		#print(i)
 	}
 

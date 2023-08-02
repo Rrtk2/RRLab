@@ -8,7 +8,7 @@
 #' @param s_alpha_lines Plotting (lines) CpG line Alpha
 #' @param s_offset Plotting (points) CpG significance point offset to line
 #' @param s_size_point Plotting (points) CpG significance point size
-#' 
+#' @import data.table
 #'
 #' @examples
 #' # This is an example using a randomized set of sites of interest on the genome, then adds random unified sampled P-values. Then shows the plot
