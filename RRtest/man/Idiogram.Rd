@@ -23,8 +23,7 @@ Make Idiogram from dataframe object based on CpGs. Indicates the chromosomal loc
 Idiogram
 }
 \examples{
-
-Example use
+# This is an example using a randomized set of sites of interest on the genome, then adds random unified sampled P-values. Then shows the plot
 npoints = 1000
 data_points <- sort(regioneR::createRandomRegions(nregions=npoints, mask=NA))
 data_points$pvalue = runif(npoints)

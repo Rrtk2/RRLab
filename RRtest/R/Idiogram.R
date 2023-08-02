@@ -9,9 +9,9 @@
 #' @param s_offset Plotting (points) CpG significance point offset to line
 #' @param s_size_point Plotting (points) CpG significance point size
 #' 
-#' @examples
 #'
-#' Example use
+#' @examples
+#' # This is an example using a randomized set of sites of interest on the genome, then adds random unified sampled P-values. Then shows the plot
 #' npoints = 1000
 #' data_points <- sort(regioneR::createRandomRegions(nregions=npoints, mask=NA))
 #' data_points$pvalue = runif(npoints)
@@ -20,18 +20,6 @@
 #' @export
 
 Idiogram = function(data_points, s_barwidth = 0.4, s_size_line = 1, s_alpha_lines = 0.33, s_offset = 0.1, s_size_point = 2) {
-
-    #################################### 
-    ############# Settings ############# 
-    #################################### 
-    # bar/chr width
-    #s_barwidth = 0.4
-    # lines
-    #s_size_line = 1
-    #s_alpha_lines = 0.33
-    # points
-    #s_offset = 0.1
-    #s_size_point = 2
 
     # libs
     require(ggplot2)
@@ -151,7 +139,7 @@ Idiogram = function(data_points, s_barwidth = 0.4, s_size_line = 1, s_alpha_line
     Chromosome_df$CentroXend = XposBars[,2]
 
     # relative number of CpGs found on chromosomes
-    data_points_df_relativeCpG = data_points_df[,.(NumCpG = round(length(pvalue)/dim(data_points_df)[1]*100,2)),by = seqnames]
+    data_points_df_relativeCpG = data_points_df[,data.table:::"[.data.table"(NumCpG = round(length(pvalue)/dim(data_points_df)[1]*100,2)),by = seqnames]
     #data_points_df_amountCpG = data_points_df[,.(NumCpG = length(pvalue)),by = seqnames]
     Chromosome_df$NumCpG  =  data_points_df_relativeCpG$NumCpG[match(Chromosome_df$seqnames,data_points_df_relativeCpG$seqnames)]
     #Chromosome_df$NumCpG  = paste0(format(Chromosome_df$NumCpG,2)," %")
