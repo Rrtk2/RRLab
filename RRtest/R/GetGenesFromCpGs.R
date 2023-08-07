@@ -20,5 +20,6 @@ GetGenesFromCpGs = function(sig.cpg = CpG_names){
     CombinedAnnoData = cbind(GeneAnnotationData,data.frame(LocationAnnotationData[match(GeneAnnotationData$cpg,rownames(LocationAnnotationData)),]))
     rownames(CombinedAnnoData) = 1:dim(CombinedAnnoData)[1]
     CombinedAnnoData = CombinedAnnoData[order(as.numeric(gsub(CombinedAnnoData$cpg,pattern = "cg",replacement = "")),CombinedAnnoData$group),]
+    class(CombinedAnnoData) = c(class(CombinedAnnoData),"GetGenesFromCpGs")
     return(CombinedAnnoData)
 }

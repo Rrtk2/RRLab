@@ -19,7 +19,7 @@
 #' 
 #' @export
 
-Idiogram = function(data_points, s_barwidth = 0.4, s_size_line = 1, s_alpha_lines = 0.33, s_offset = 0.1, s_size_point = 2) {
+Idiogram = function(data_points, s_barwidth = 0.4, s_size_line = 1, s_alpha_lines = 0.33, s_offset = 0.1, s_size_point = 2, pvalues = NA) {
 
     # libs
     require(ggplot2)
@@ -28,7 +28,16 @@ Idiogram = function(data_points, s_barwidth = 0.4, s_size_line = 1, s_alpha_line
     require(data.table)
     require(ggnewscale)
 
-    if(class(data_points)!="data.frame"){
+    # chcek if output from GetGenesFromCpGs()
+     if("GetGenesFromCpGs"%in%class(data_points)){
+        if(FALSE%in%is.na(pvalues)){
+            data_points = data.frame(seqnames = CpG_info$chr, start = CpG_info$pos, end = CpG_info$pos, pvalue = pvalues)
+            }else{
+            stop("Detected GetGenesFromCpGs output, but no 'pvalues' are given.")
+        }
+    }
+
+    if(!"data.frame"%in%class(data_points)){
         warning("converted data_points to dataframe")
         data_points = data.frame(data_points)
     }
