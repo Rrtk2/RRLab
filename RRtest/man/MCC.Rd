@@ -7,7 +7,7 @@
 MCC(data, lev = NULL, model = NULL, showCM = FALSE, Verbose = FALSE)
 }
 \arguments{
-\item{data}{Input the dataset object (column 1 = OBS; column 2 = PRED).}
+\item{data}{Input the dataset object (column 1 = OBS; column 2 = PRED). Additonal 2 columns predictions for class 1 then class 2; see example}
 
 \item{lev}{NULL}
 
@@ -23,6 +23,7 @@ This function required a dataset with column 1 as observations and column 2 with
 }
 \examples{
 MCC(data.frame(obs=c(1,1,1,2,2,2),pred=c(1,1,1,1,2,2)))
+MCC(data.frame(obs=c("a","a","a","b","b","b"),pred=c("a","a","a","a","b","b"),a=c(0.9,0.8,0.9,0.2,0.3,0.9),b=c(0.1, 0.2, 0.1, 0.8, 0.7, 0.1)),lev=c("a","b"))
 # Example high accurate
 MCC(data.frame(obs=c(rep(1,1000),rep(2,1000)),pred=c(rep(1,1000),rep(2,1000))))
 # Example Inverse accurate
