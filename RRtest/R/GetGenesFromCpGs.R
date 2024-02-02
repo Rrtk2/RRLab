@@ -8,7 +8,9 @@
 #' @examples
 #' Result = GetGenesFromCpGs(sig.cpg = c("cg25871843","cg26405148"), array.type = "EPIC")
 #' @export
-GetGenesFromCpGs = function(sig.cpg = CpG_names){
+GetGenesFromCpGs = function(sig.cpg = NA){
+    if(is.na(sig.cpg)){stop("Please enter any CpGs (as character)")}
+
     array.type = "EPIC"
     require(IlluminaHumanMethylationEPICanno.ilm10b4.hg19)
     flatu <- missMethyl:::.getFlatAnnotation(array.type)
