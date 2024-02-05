@@ -26,7 +26,7 @@
 #' @export
 
 MCC = function(data, lev=NULL, model=NULL, showCM = FALSE,Verbose=FALSE){
-	df = data.frame(obs=as.character(data$obs),pred=as.character(data$pred))
+	df = data.frame(obs=factor(data$obs,levels=unique(data$obs)),pred=factor(data$pred,levels=unique(data$obs)))
 	
 	CM = table(df)
 	
@@ -114,6 +114,12 @@ MCC = function(data, lev=NULL, model=NULL, showCM = FALSE,Verbose=FALSE){
 		if(T%in%is.infinite(out )&Verbose){
 			cat(paste0("Some values could not compute. Infinite values detected:\n"))
 			cat(paste0(names(out)[is.infinite(out)],""),sep = "\n")
+		}
+
+		# Check for inf values
+		if(T%in%is.nan(out )&Verbose){
+			cat(paste0("Some values could not compute. NaN values detected:\n"))
+			cat(paste0(names(out)[is.nan(out)],""),sep = "\n")
 		}
 		
 
