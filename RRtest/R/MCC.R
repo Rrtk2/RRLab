@@ -26,7 +26,7 @@
 #' @export
 
 MCC = function(data, lev=NULL, model=NULL, showCM = FALSE,Verbose=FALSE){
-	df = data.frame(obs=factor(data$obs,levels=unique(data$obs)),pred=factor(data$pred,levels=unique(data$obs)))
+	df = data.frame(obs=as.character(data$obs),pred=as.character(data$pred))
 	
 	CM = table(df)
 	
