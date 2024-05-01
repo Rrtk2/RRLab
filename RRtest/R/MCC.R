@@ -23,9 +23,21 @@
 #' MCC(data.frame(obs=c(rep(1,1000),rep(2,10)),pred=c(rep(1,1010))))
 #' # Example moderate accurate inbalance
 #' MCC(data.frame(obs=c(rep(1,1000),round(runif(10,1,2))),pred=c(rep(1,1000),rep(2,10))))
+#' 
+#' OR with ROC object
+#' data(aSAH)
+#'
+#' Rocobj = roc(aSAH$outcome, aSAH$s100b,
+#'    levels=c("Good", "Poor"))
+#' MCC.roc(Rocobj)
 #' @export
 
-MCC = function(data, lev=NULL, model=NULL, showCM = FALSE,Verbose=FALSE){
+MCC <- function(data, ...) {
+  UseMethod("MCC")
+}
+
+# default
+MCC.default = function(data, lev=NULL, model=NULL, showCM = FALSE,Verbose=FALSE){
 	df = data.frame(obs=as.character(data$obs),pred=as.character(data$pred))
 	
 	CM = table(df)
@@ -129,7 +141,98 @@ MCC = function(data, lev=NULL, model=NULL, showCM = FALSE,Verbose=FALSE){
 		out = c(TPR=0.5,FPR=0.5,FNR=0.5,TNR=0.5,PPV=0.5,FDR=0.5,FOR=0.5,NPV=0.5,PLR=1.0,NLR=1.0,MK=0.0,DOR=1.0,BA=0.5,F1=0.5,FMI=0.5,
 		MCC=0.0,TS=0.3,Prevalence=0.5,Prevalence_THR=0.5,ACC=0.5,Informedness=0.0,YoudenJ=0.0,AUC=0.5)
 	}	
-		
+	class(out) = c(class(out),"MCC")	
+
 	if(showCM){print(out)}
 	return(out)
+}
+
+# if roc object given
+MCC.roc = function(data, lev = NULL, model = NULL, showCM = FALSE, Verbose = FALSE) 
+{
+
+    obs = data$original.response
+    pred = factor(eval(parse(text=paste0("data$original.predictor",data$direction,"0.5"))),levels = c(TRUE,FALSE),labels = data$levels)
+
+    df = data.frame(obs = as.character(obs), pred = as.character(pred))
+
+    CM = table(df)
+  if (names(labels(CM)[1]) == "obs") {
+    CM = t(CM)
+  }
+  if ((dim(CM)[1] == 2 & dim(CM)[2] == 2)) {
+    if (showCM) {
+      cat("Confusion matrix:\n")
+      print(CM)
+      cat("\n")
+    }
+    TP = CM[1, 1]
+    FP = CM[1, 2]
+    TN = CM[2, 2]
+    FN = CM[2, 1]
+    TP <- as.double(TP)
+    FP <- as.double(FP)
+    TN <- as.double(TN)
+    FN <- as.double(FN)
+    P = TP + FN
+    N = FP + TN
+    PP = TP + FP
+    PN = FN + TN
+    TPR = TP/P
+    FPR = FP/N
+    FNR = FN/P
+    TNR = TN/N
+    PPV = TP/PP
+    FDR = FP/PP
+    FOR = FN/PN
+    NPV = TN/PN
+    PLR = TPR/FPR
+    NLR = FNR/TNR
+    MK = PPV + NPV - 1
+    DOR = PLR/NLR
+    BA = (TPR + TNR)/2
+    F1 = (2 * TP)/((2 * TP) + FP + FN)
+    FMI = sqrt(PPV * TPR)
+    MCC = (TP * TN - FP * FN)/sqrt((TP + FP) * (TP + FN) * 
+      (TN + FP) * (TN + FN))
+    TS = TP/(TP + FN + FP)
+    Prevalence = (P/(P + N))
+    Prevalence_THR = (sqrt(TPR * FPR) - FPR)/(TPR - FPR)
+    ACC = (TP + TN)/(P + N)
+    Informedness = TPR + TNR - 1
+    Total_Pop = P + N
+    YoudenJ = ((TP/(TP + FN)) + (TN/(TN + FP))) - 1
+    AUC = as.numeric(data$auc)
+    out = c(TPR = TPR, FPR = FPR, FNR = FNR, TNR = TNR, 
+      PPV = PPV, FDR = FDR, FOR = FOR, NPV = NPV, PLR = PLR, 
+      NLR = NLR, MK = MK, DOR = DOR, BA = BA, F1 = F1, 
+      FMI = FMI, MCC = MCC, TS = TS, Prevalence = Prevalence, 
+      Prevalence_THR = Prevalence_THR, ACC = ACC, Informedness = Informedness, 
+      YoudenJ = YoudenJ, AUC = AUC)
+    out = round(out, 4)
+    if (T %in% (out == 0) & Verbose) {
+      cat(paste0("Some values are zero:\n"))
+      cat(paste0(names(out)[out == 0], ""), sep = "\n")
+    }
+    if (T %in% is.infinite(out) & Verbose) {
+      cat(paste0("Some values could not compute. Infinite values detected:\n"))
+      cat(paste0(names(out)[is.infinite(out)], ""), sep = "\n")
+    }
+    if (T %in% is.nan(out) & Verbose) {
+      cat(paste0("Some values could not compute. NaN values detected:\n"))
+      cat(paste0(names(out)[is.nan(out)], ""), sep = "\n")
+    }
+  }
+  else {
+    out = c(TPR = 0.5, FPR = 0.5, FNR = 0.5, TNR = 0.5, 
+      PPV = 0.5, FDR = 0.5, FOR = 0.5, NPV = 0.5, PLR = 1, 
+      NLR = 1, MK = 0, DOR = 1, BA = 0.5, F1 = 0.5, FMI = 0.5, 
+      MCC = 0, TS = 0.3, Prevalence = 0.5, Prevalence_THR = 0.5, 
+      ACC = 0.5, Informedness = 0, YoudenJ = 0, AUC = 0.5)
+  }
+  if (showCM) {
+    print(out)
+  }
+  class(out) = c(class(out),"MCC")
+  return(out)
 }
