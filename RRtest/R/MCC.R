@@ -31,11 +31,13 @@
 #'    levels=c("Good", "Poor"))
 #' MCC.roc(Rocobj)
 #' @export
-
 MCC <- function(data, ...) {
   UseMethod("MCC")
 }
 
+#' @rdname MCC
+#' @export
+#' 
 # default
 MCC.default = function(data, lev=NULL, model=NULL, showCM = FALSE,Verbose=FALSE){
 	df = data.frame(obs=as.character(data$obs),pred=as.character(data$pred))
@@ -147,6 +149,9 @@ MCC.default = function(data, lev=NULL, model=NULL, showCM = FALSE,Verbose=FALSE)
 	return(out)
 }
 
+#' @rdname MCC
+#' @export
+#' 
 # if roc object given
 MCC.roc = function(data, lev = NULL, model = NULL, showCM = FALSE, Verbose = FALSE) 
 {

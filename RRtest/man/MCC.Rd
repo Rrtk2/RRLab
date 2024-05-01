@@ -2,9 +2,15 @@
 % Please edit documentation in R/MCC.R
 \name{MCC}
 \alias{MCC}
+\alias{MCC.default}
+\alias{MCC.roc}
 \title{MCC}
 \usage{
-MCC(data, lev = NULL, model = NULL, showCM = FALSE, Verbose = FALSE)
+MCC(data, ...)
+
+\method{MCC}{default}(data, lev = NULL, model = NULL, showCM = FALSE, Verbose = FALSE)
+
+\method{MCC}{roc}(data, lev = NULL, model = NULL, showCM = FALSE, Verbose = FALSE)
 }
 \arguments{
 \item{data}{Input the dataset object (column 1 = OBS; column 2 = PRED). Additonal 2 columns predictions for class 1 then class 2; see example}
@@ -36,4 +42,11 @@ MCC(data.frame(obs=c(rep(1,1000),rep(2,10)),pred=c(rep(1,1000),rep(2,10))))
 MCC(data.frame(obs=c(rep(1,1000),rep(2,10)),pred=c(rep(1,1010))))
 # Example moderate accurate inbalance
 MCC(data.frame(obs=c(rep(1,1000),round(runif(10,1,2))),pred=c(rep(1,1000),rep(2,10))))
+
+OR with ROC object
+data(aSAH)
+
+Rocobj = roc(aSAH$outcome, aSAH$s100b,
+   levels=c("Good", "Poor"))
+MCC.roc(Rocobj)
 }
