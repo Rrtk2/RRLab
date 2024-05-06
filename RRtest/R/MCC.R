@@ -157,7 +157,7 @@ MCC.roc = function(data, lev = NULL, model = NULL, showCM = FALSE, Verbose = FAL
 {
 
     obs = data$original.response
-    pred = factor(eval(parse(text=paste0("data$original.predictor",data$direction,as.numeric(coords(data, "best")[1])))),levels = c(TRUE,FALSE),labels = data$levels)
+    pred = factor(eval(parse(text=paste0("data$original.predictor ",data$direction," ", as.numeric(coords(data, "best")[1])))),levels = c(TRUE,FALSE),labels = data$levels)
 
     df = data.frame(obs = as.character(obs), pred = as.character(pred))
 
