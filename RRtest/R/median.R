@@ -42,7 +42,7 @@ median2 = function(x) {
     #cat("Assuming level order:\n")
     #cat(levels(x))
     #cat("\n")
-    return(levels(x)[median(as.numeric(as.factor(x),na.rm = TRUE))]) # if case hits with median being index in between, it selects the lower index. (eg 1.5 -> 1)
+    return(levels(as.factor(x))[median(as.numeric(as.factor(x),na.rm = TRUE))]) # if case hits with median being index in between, it selects the lower index. (eg 1.5 -> 1)
 
   } else {
     stop("Input must be numeric or a factor")
