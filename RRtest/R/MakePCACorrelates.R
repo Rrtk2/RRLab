@@ -350,7 +350,7 @@ if (nrow(selected_detail) >= 2) {
 	# also make density plots because why not
 	# Beta <- toy_data$Beta    # Beta is a matrix with rows as features and columns as samples
 	# pheno <- toy_data$pheno  # pheno contains sample information
-	generateSamplePlotsForBetas(list(Beta = Beta, pheno=pheno),output_dir)
+	RRtest::generateSamplePlotsForBetas(list(Beta = Beta, pheno=pheno),output_dir)
 	
   return(list(correlation_frame = correlation_frame,
               detailed_correlations = detailed_correlations,
