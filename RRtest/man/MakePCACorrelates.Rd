@@ -4,14 +4,7 @@
 \alias{MakePCACorrelates}
 \title{MakePCACorrelates}
 \usage{
-MakePCACorrelates(
-  Beta,
-  pheno,
-  output_dir = "./plots/",
-  savename = "01",
-  var_threshold = 0.9,
-  p_threshold = 0.05
-)
+This function performs Principal Component Analysis (PCA) on a numeric data matrix (Beta) and evaluates its relationship with phenotypic variables provided in a data frame (pheno). It generates a scree plot to visualize variance distribution, computes the correlations between significant principal components and phenotypic variables, and produces individual as well as pairwise PC plots when appropriate.
 }
 \arguments{
 \item{Beta}{A numeric matrix where columns correspond to samples and rows to features. If not already a matrix, it will be coerced into one.}
@@ -38,16 +31,14 @@ A list containing:
 }
 }
 \description{
-This function performs Principal Component Analysis (PCA) on a numeric data matrix (Beta) and evaluates its relationship with phenotypic variables provided in a data frame (pheno). It generates a scree plot to visualize variance distribution, computes the correlations between significant principal components and phenotypic variables, and produces individual as well as pairwise PC plots when appropriate.
+MakePCACorrelates
 }
 \examples{
-\dontrun{
   # Assume Beta is a numeric matrix and pheno is a data frame with matching sample rows.
   result <- MakePCACorrelates(Beta, pheno, 
                               output_dir = "./results/", 
                               savename = "analysis1", 
                               var_threshold = 0.9, 
                               p_threshold = 0.05)
-}
 
 }
