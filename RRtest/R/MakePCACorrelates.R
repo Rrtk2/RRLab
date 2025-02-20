@@ -198,37 +198,103 @@ MakePCACorrelates <- function(Beta, pheno,
   dev.off()
   
   ### Create additional pairwise PC plots for the PCs with strong phenotype correlations
-  # Filter for PCs with absolute correlation > 0.3
-  selected_detail <- detailed_correlations[!is.na(detailed_correlations$Correlation) & 
-                                             abs(detailed_correlations$Correlation) > 0.3, ]
-  if (nrow(selected_detail) >= 2) {
-    pairwise_path <- file.path(output_dir, paste0("01_PCA_PairwisePlots_", savename, ".pdf"))
-    pdf(file = pairwise_path, width = 8, height = 6)
+# Filter for PCs with absolute correlation > 0.3
+selected_detail <- detailed_correlations[!is.na(detailed_correlations$Correlation) & 
+                                           abs(detailed_correlations$Correlation) > 0.3, ]
+if (nrow(selected_detail) >= 2) {
+  pairwise_path <- file.path(output_dir, paste0("01_PCA_PairwisePlots_", savename, ".pdf"))
+  pdf(file = pairwise_path, width = 8, height = 6)
+  
+  # Ensure gridExtra is available for arranging plots when needed
+  if (!requireNamespace("gridExtra", quietly = TRUE)) {
+    stop("Package 'gridExtra' is required for arranging plots when both phenotypes have many unique values.")
+  }
+  
+  # Get the list of PC indices that meet the criteria
+  pcs <- selected_detail$PC
+  # Create pairwise combinations
+  combs <- utils::combn(pcs, 2)
+  
+  for (i in 1:ncol(combs)) {
+    pc1 <- combs[1, i]
+    pc2 <- combs[2, i]
+    # Get the best correlated phenotype for each selected PC
+    var1 <- selected_detail$Variable[selected_detail$PC == pc1]
+    var2 <- selected_detail$Variable[selected_detail$PC == pc2]
     
-    # Get the list of PC indices that meet the criteria
-    pcs <- selected_detail$PC
-    # Create pairwise combinations
-    combs <- utils::combn(pcs, 2)
-    for (i in 1:ncol(combs)) {
-      pc1 <- combs[1, i]
-      pc2 <- combs[2, i]
-      # Get the best correlated phenotype for each selected PC
-      var1 <- selected_detail$Variable[selected_detail$PC == pc1]
-      var2 <- selected_detail$Variable[selected_detail$PC == pc2]
+    # Prepare a data frame with the two PC scores and corresponding phenotype variables
+    plot_data <- data.frame(
+      PC1 = pca$x[, pc1],
+      PC2 = pca$x[, pc2],
+      Phenotype1 = as.factor(pheno[, var1]),
+      Phenotype2 = as.factor(pheno[, var2])
+    )
+    
+    # Compute Pearson correlation between PC1 and PC2
+    pc_cor <- stats::cor(plot_data$PC1, plot_data$PC2)
+    
+    # Determine aesthetic mapping based on number of unique values in each phenotype
+    threshold <- 6  # threshold for "low" unique counts
+    n_unique1 <- length(unique(pheno[, var1]))
+    n_unique2 <- length(unique(pheno[, var2]))
+    
+    # Case 1: Both phenotypes have many unique values
+    if (n_unique1 > threshold & n_unique2 > threshold) {
+      # Plot A: Use Phenotype1 for color, fixed shape (e.g., shape=16)
+      p1 <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2, color = Phenotype1)) +
+        ggplot2::geom_point(shape = 16, size = 2) +
+        ggplot2::labs(title = paste0("PC", pc1, " vs PC", pc2, " (Plot A)"),
+                      subtitle = paste0("Correlation = ", round(pc_cor, 2),
+                                        " | Phenotype1 (color): ", var1),
+                      x = paste0("PC", pc1, " (", round(rel_variance[pc1] * 100, 1), "% variance)"),
+                      y = paste0("PC", pc2, " (", round(rel_variance[pc2] * 100, 1), "% variance)")) +
+        ggplot2::theme_minimal()
       
-      # Prepare a data frame with the two PC scores and corresponding phenotype variables
-      plot_data <- data.frame(
-        PC1 = pca$x[, pc1],
-        PC2 = pca$x[, pc2],
-        Phenotype1 = as.factor(pheno[, var1]),
-        Phenotype2 = as.factor(pheno[, var2])
-      )
-      # Compute Pearson correlation between PC1 and PC2
-      pc_cor <- stats::cor(plot_data$PC1, plot_data$PC2)
+      # Plot B: Use Phenotype2 for color, fixed shape
+      p2 <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2, color = Phenotype2)) +
+        ggplot2::geom_point(shape = 16, size = 2) +
+        ggplot2::labs(title = paste0("PC", pc1, " vs PC", pc2, " (Plot B)"),
+                      subtitle = paste0("Correlation = ", round(pc_cor, 2),
+                                        " | Phenotype2 (color): ", var2),
+                      x = paste0("PC", pc1, " (", round(rel_variance[pc1] * 100, 1), "% variance)"),
+                      y = paste0("PC", pc2, " (", round(rel_variance[pc2] * 100, 1), "% variance)")) +
+        ggplot2::theme_minimal()
       
-      p_pair <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2)) +
-        ggplot2::geom_point(ggplot2::aes(color = Phenotype1, shape = Phenotype2), size = 2) +
-        ggplot2::geom_smooth(method = "lm", se = TRUE, color = "blue") +
+      # Arrange the two plots vertically on one page
+      gridExtra::grid.arrange(p1, p2, ncol = 1)
+      
+    } else if (n_unique1 > threshold) {
+      # Case 2: Only Phenotype1 has many unique values; use it for color and Phenotype2 for shape
+      p_pair <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2, color = Phenotype1, shape = Phenotype2)) +
+        ggplot2::geom_point(size = 2) +
+        ggplot2::labs(title = paste0("PC", pc1, " vs PC", pc2),
+                      subtitle = paste0("Correlation = ", round(pc_cor, 2),
+                                        " | Phenotype1 (color): ", var1,
+                                        " | Phenotype2 (shape): ", var2),
+                      x = paste0("PC", pc1, " (", round(rel_variance[pc1] * 100, 1), "% variance)"),
+                      y = paste0("PC", pc2, " (", round(rel_variance[pc2] * 100, 1), "% variance)")) +
+        ggplot2::theme_minimal()
+      
+      print(p_pair)
+      
+    } else if (n_unique2 > threshold) {
+      # Case 3: Only Phenotype2 has many unique values; use it for color and Phenotype1 for shape
+      p_pair <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2, color = Phenotype2, shape = Phenotype1)) +
+        ggplot2::geom_point(size = 2) +
+        ggplot2::labs(title = paste0("PC", pc1, " vs PC", pc2),
+                      subtitle = paste0("Correlation = ", round(pc_cor, 2),
+                                        " | Phenotype1 (shape): ", var1,
+                                        " | Phenotype2 (color): ", var2),
+                      x = paste0("PC", pc1, " (", round(rel_variance[pc1] * 100, 1), "% variance)"),
+                      y = paste0("PC", pc2, " (", round(rel_variance[pc2] * 100, 1), "% variance)")) +
+        ggplot2::theme_minimal()
+      
+      print(p_pair)
+      
+    } else {
+      # Case 4: Both phenotypes have few unique values; default mapping
+      p_pair <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2, color = Phenotype1, shape = Phenotype2)) +
+        ggplot2::geom_point(size = 2) +
         ggplot2::labs(title = paste0("PC", pc1, " vs PC", pc2),
                       subtitle = paste0("Correlation = ", round(pc_cor, 2),
                                         " | Phenotype1 (color): ", var1,
@@ -239,10 +305,12 @@ MakePCACorrelates <- function(Beta, pheno,
       
       print(p_pair)
     }
-    dev.off()
-  } else {
-    pairwise_path <- NA
   }
+  dev.off()
+} else {
+  pairwise_path <- NA
+}
+
   
   return(list(correlation_frame = correlation_frame,
               detailed_correlations = detailed_correlations,
