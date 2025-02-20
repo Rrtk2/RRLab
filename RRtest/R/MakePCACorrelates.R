@@ -48,7 +48,15 @@ MakePCACorrelates <- function(Beta, pheno,
   if (ncol(Beta) != nrow(pheno)) {
     stop("Dimensions of Beta and pheno do not match.")
   }
-  
+
+  # Check for valid row names in pheno.
+  # This includes checking if row names are missing, NA, empty, or simply the default numeric sequence.
+  if (is.null(rownames(pheno)) || 
+      any(is.na(rownames(pheno)) | rownames(pheno) == "") ||
+      all(rownames(pheno) == as.character(seq_len(nrow(pheno))))) {
+    rownames(pheno) <- paste0("Sample_", seq_len(nrow(pheno)))
+  }
+
   # Check if the output directory exists; if not, create it (including subdirectories)
   if (!dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE)
@@ -73,32 +81,61 @@ MakePCACorrelates <- function(Beta, pheno,
   pheno_numeric <- apply(pheno, 2, function(x) as.numeric(as.factor(x)))
   pheno_numeric <- pheno_numeric[, colSums(is.na(pheno_numeric)) == 0]
   
-  # Compute correlations between PCs and phenotypic variables (coefficients)
-  correlation_frame <- as.data.frame(
-    apply(pca$x[, 1:min(num_significant_PCs, ncol(Beta))], 2, function(pc_scores) {
-      sapply(as.data.frame(pheno_numeric), function(pheno_var) {
-        if (stats::sd(pheno_var) == 0) return(NA)
-        test <- stats::cor.test(pc_scores, pheno_var)
-        if (test$p.value < p_threshold) {
-          return(round(test$estimate, 2))
-        } else {
-          return(NA)
-        }
-      })
-    })
-  )
-  rownames(correlation_frame) <- colnames(pheno_numeric)
-  
-  # Also compute p values
-  correlation_frame_p <- as.data.frame(
-    apply(pca$x[, 1:min(num_significant_PCs, ncol(Beta))], 2, function(pc_scores) {
-      sapply(as.data.frame(pheno_numeric), function(pheno_var) {
-        if (stats::sd(pheno_var) == 0) return(NA)
-        test <- stats::cor.test(pc_scores, pheno_var)
-        return(round(test$p.value, 4))
-      })
-    })
-  )
+# Determine the number of PCs to use
+num_PCs <- min(num_significant_PCs, ncol(Beta))
+
+# Convert phenotypic variables to a data frame
+pheno_df <- as.data.frame(pheno_numeric)
+
+# Initialize a matrix to store the correlation coefficients
+corr_mat <- matrix(NA, nrow = ncol(pheno_df), ncol = num_PCs)
+rownames(corr_mat) <- colnames(pheno_df)
+colnames(corr_mat) <- paste0("PC", 1:num_PCs)
+
+# Loop through each PC and each phenotypic variable
+for (i in seq_len(num_PCs)) {
+pc_scores <- pca$x[, i]
+for (j in seq_along(pheno_df)) {
+	pheno_var <- pheno_df[[j]]
+	
+	# Skip variables with zero variance to avoid errors
+	if (sd(pheno_var) == 0) next
+	
+	# Perform the correlation test
+	test <- cor.test(pc_scores, pheno_var)
+	
+	# Save the rounded correlation if the p-value is below the threshold
+	#if (test$p.value < p_threshold) {
+	corr_mat[j, i] <- round(test$estimate, 2)
+	#}
+}
+}
+  rownames(corr_mat) <- colnames(pheno_numeric)
+  correlation_frame  = corr_mat
+  # Initialize a matrix to store the p-values
+pvalue_mat <- matrix(NA, nrow = ncol(pheno_df), ncol = num_PCs)
+rownames(pvalue_mat) <- colnames(pheno_df)
+colnames(pvalue_mat) <- paste0("PC", 1:num_PCs)
+
+# Loop through each PC and each phenotypic variable
+for (i in seq_len(num_PCs)) {
+  pc_scores <- pca$x[, i]
+  for (j in seq_along(pheno_df)) {
+    pheno_var <- pheno_df[[j]]
+    
+    # Skip variables with zero variance to avoid errors
+    if (sd(pheno_var) == 0) next
+    
+    # Perform the correlation test
+    test <- cor.test(pc_scores, pheno_var)
+    
+    # Save the rounded p-value (to 4 decimal places)
+    pvalue_mat[j, i] <- round(test$p.value, 4)
+  }
+}
+
+# Convert the matrix to a data frame for easier handling
+correlation_frame_p <- as.data.frame(pvalue_mat)
   
   ### Plot individual PC vs phenotype plots using ggplot2
   plot_path <- file.path(output_dir, paste0("01_PCA_Plots_", savename, ".pdf"))
@@ -310,8 +347,11 @@ if (nrow(selected_detail) >= 2) {
 } else {
   pairwise_path <- NA
 }
-
-  
+	# also make density plots because why not
+	# Beta <- toy_data$Beta    # Beta is a matrix with rows as features and columns as samples
+	# pheno <- toy_data$pheno  # pheno contains sample information
+	generateSamplePlotsForBetas(list(Beta = Beta, pheno=pheno),output_dir)
+	
   return(list(correlation_frame = correlation_frame,
               detailed_correlations = detailed_correlations,
               pca_result = pca,
