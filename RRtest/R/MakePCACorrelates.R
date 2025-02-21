@@ -38,15 +38,45 @@ MakePCACorrelates <- function(Beta, pheno,
                               p_threshold = 0.05) {
   
   # Input validation
-  if (!is.matrix(Beta)) {
-    Beta <- as.matrix(Beta)
+# Validate and try to auto-correct inputs
+
+# Convert Beta to a matrix if possible
+if (!is.matrix(Beta)) {
+  Beta_conv <- tryCatch(as.matrix(Beta), error = function(e) e)
+  if (inherits(Beta_conv, "error")) {
+    stop("Unable to convert Beta to a matrix: ", Beta_conv$message)
+  } else {
+    Beta <- Beta_conv
+    message("Converted Beta to a matrix.")
   }
-  if (!is.data.frame(pheno)) {
-    stop("pheno must be a data frame")
+}
+
+# Convert pheno to a data frame if possible
+if (!is.data.frame(pheno)) {
+  pheno_conv <- tryCatch(as.data.frame(pheno), error = function(e) e)
+  if (inherits(pheno_conv, "error")) {
+    stop("Unable to convert pheno to a data frame: ", pheno_conv$message)
+  } else {
+    pheno <- pheno_conv
+    message("Converted pheno to a data frame.")
   }
-  if (ncol(Beta) != nrow(pheno)) {
-    stop("Dimensions of Beta and pheno do not match.")
+}
+
+# Check dimensions
+if (ncol(Beta) != nrow(pheno)) {
+  # Try to fix by transposing Beta, if that makes sense:
+  if (nrow(Beta) == nrow(pheno)) {
+    Beta <- t(Beta)
+    if (ncol(Beta) == nrow(pheno)) {
+      message("Transposed Beta to match the dimensions of pheno.")
+    } else {
+      stop("Dimensions of Beta and pheno still do not match after transposing.")
+    }
+  } else {
+    stop("Dimensions of Beta and pheno do not match and cannot be auto-corrected.")
   }
+}
+
 
   # Check for valid row names in pheno.
   # This includes checking if row names are missing, NA, empty, or simply the default numeric sequence.
@@ -88,28 +118,28 @@ pheno_df <- as.data.frame(pheno_numeric)
 
 # Initialize a matrix to store the correlation coefficients
 corr_mat <- matrix(NA, nrow = ncol(pheno_df), ncol = num_PCs)
-rownames(corr_mat) <- colnames(pheno_df)
+rownames(corr_mat) <- colnames(pheno)
 colnames(corr_mat) <- paste0("PC", 1:num_PCs)
 
 # Loop through each PC and each phenotypic variable
 for (i in seq_len(num_PCs)) {
 pc_scores <- pca$x[, i]
-for (j in seq_along(pheno_df)) {
-	pheno_var <- pheno_df[[j]]
-	
-	# Skip variables with zero variance to avoid errors
-	if (sd(pheno_var) == 0) next
-	
-	# Perform the correlation test
-	test <- cor.test(pc_scores, pheno_var)
-	
-	# Save the rounded correlation if the p-value is below the threshold
-	#if (test$p.value < p_threshold) {
-	corr_mat[j, i] <- round(test$estimate, 2)
-	#}
+	for (j in seq_along(pheno_df)) {
+		pheno_var <- pheno_df[[j]]
+		
+		# Skip variables with zero variance to avoid errors
+		if (sd(pheno_var) == 0) next
+		
+		# Perform the correlation test
+		test <- cor.test(pc_scores, pheno_var)
+		
+		# Save the rounded correlation if the p-value is below the threshold
+		#if (test$p.value < p_threshold) {
+		corr_mat[j, i] <- round(test$estimate, 2)
+		#}
+	}
 }
-}
-  rownames(corr_mat) <- colnames(pheno_numeric)
+  
   correlation_frame  = corr_mat
   # Initialize a matrix to store the p-values
 pvalue_mat <- matrix(NA, nrow = ncol(pheno_df), ncol = num_PCs)
@@ -349,8 +379,14 @@ if (nrow(selected_detail) >= 2) {
 	# also make density plots because why not
 	# Beta <- toy_data$Beta    # Beta is a matrix with rows as features and columns as samples
 	# pheno <- toy_data$pheno  # pheno contains sample information
-	RRtest::generateSamplePlotsForBetas(list(Beta = Beta, pheno=pheno),output_dir)
+	#RRtest::generateSamplePlotsForBetas(list(Beta = Beta, pheno=pheno),output_dir)
+	# errors!! nevermind
+
+	# show user where to find files
+	abs_path <- normalizePath(file.path(getwd(), output_dir), mustWork = FALSE)
+	message("Plots saved to: ", abs_path)
 	
+
   return(list(correlation_frame = correlation_frame,
               detailed_correlations = detailed_correlations,
               pca_result = pca,
