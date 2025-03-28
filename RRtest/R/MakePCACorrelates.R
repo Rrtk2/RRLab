@@ -38,135 +38,104 @@ MakePCACorrelates <- function(Beta, pheno,
                               p_threshold = 0.05) {
   
   # Input validation
-# Validate and try to auto-correct inputs
-
-# Convert Beta to a matrix if possible
-if (!is.matrix(Beta)) {
-  Beta_conv <- tryCatch(as.matrix(Beta), error = function(e) e)
-  if (inherits(Beta_conv, "error")) {
-    stop("Unable to convert Beta to a matrix: ", Beta_conv$message)
-  } else {
-    Beta <- Beta_conv
-    message("Converted Beta to a matrix.")
-  }
-}
-
-# Convert pheno to a data frame if possible
-if (!is.data.frame(pheno)) {
-  pheno_conv <- tryCatch(as.data.frame(pheno), error = function(e) e)
-  if (inherits(pheno_conv, "error")) {
-    stop("Unable to convert pheno to a data frame: ", pheno_conv$message)
-  } else {
-    pheno <- pheno_conv
-    message("Converted pheno to a data frame.")
-  }
-}
-
-# Check dimensions
-if (ncol(Beta) != nrow(pheno)) {
-  # Try to fix by transposing Beta, if that makes sense:
-  if (nrow(Beta) == nrow(pheno)) {
-    Beta <- t(Beta)
-    if (ncol(Beta) == nrow(pheno)) {
-      message("Transposed Beta to match the dimensions of pheno.")
+  # Convert Beta to a matrix if necessary
+  if (!is.matrix(Beta)) {
+    Beta_conv <- tryCatch(as.matrix(Beta), error = function(e) e)
+    if (inherits(Beta_conv, "error")) {
+      stop("Unable to convert Beta to a matrix: ", Beta_conv$message)
     } else {
-      stop("Dimensions of Beta and pheno still do not match after transposing.")
+      Beta <- Beta_conv
+      message("Converted Beta to a matrix.")
     }
-  } else {
-    stop("Dimensions of Beta and pheno do not match and cannot be auto-corrected.")
   }
-}
-
-
-  # Check for valid row names in pheno.
-  # This includes checking if row names are missing, NA, empty, or simply the default numeric sequence.
+  
+  # Convert pheno to a data frame if necessary
+  if (!is.data.frame(pheno)) {
+    pheno_conv <- tryCatch(as.data.frame(pheno), error = function(e) e)
+    if (inherits(pheno_conv, "error")) {
+      stop("Unable to convert pheno to a data frame: ", pheno_conv$message)
+    } else {
+      pheno <- pheno_conv
+      message("Converted pheno to a data frame.")
+    }
+  }
+  
+  # Check dimensions; if Beta's dimensions are off, try transposing
+  if (ncol(Beta) != nrow(pheno)) {
+    if (nrow(Beta) == nrow(pheno)) {
+      Beta <- t(Beta)
+      if (ncol(Beta) == nrow(pheno)) {
+        message("Transposed Beta to match the dimensions of pheno.")
+      } else {
+        stop("Dimensions of Beta and pheno still do not match after transposing.")
+      }
+    } else {
+      stop("Dimensions of Beta and pheno do not match and cannot be auto-corrected.")
+    }
+  }
+  
+  # Ensure pheno has proper row names
   if (is.null(rownames(pheno)) || 
       any(is.na(rownames(pheno)) | rownames(pheno) == "") ||
       all(rownames(pheno) == as.character(seq_len(nrow(pheno))))) {
     rownames(pheno) <- paste0("Sample_", seq_len(nrow(pheno)))
   }
-
-  # Check if the output directory exists; if not, create it (including subdirectories)
+  
+  # Create output directory if it doesn't exist
   if (!dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE)
   }
   
-  # Perform PCA on complete cases
+  # Perform PCA on complete cases (ensuring Beta has no missing rows)
   completeBeta <- Beta[stats::complete.cases(Beta), ]
   pca <- stats::prcomp(t(completeBeta))
   
-  # Save scree plot using base R plotting (for simplicity)
+  # Save scree plot using base R plotting
   scree_path <- file.path(output_dir, paste0("01_ScreePlot_", savename, ".pdf"))
   pdf(file = scree_path)
   plot(pca, main = "Scree Plot")
   dev.off()
   
-  # Compute relative variance explained by each PC
+  # Compute relative variance explained and determine number of significant PCs
   rel_variance <- round(pca$sdev^2 / sum(pca$sdev^2), 3)
   num_significant_PCs <- min(which(cumsum(rel_variance) > var_threshold))
   cat("PC1 explains", rel_variance[1] * 100, "% of variance in the data\n")
   
-  # Convert phenodata to numeric matrix for correlation computations
+  # Convert phenotypic data to a numeric matrix for correlation computations
   pheno_numeric <- apply(pheno, 2, function(x) as.numeric(as.factor(x)))
   pheno_numeric <- pheno_numeric[, colSums(is.na(pheno_numeric)) == 0]
+  pheno_df <- as.data.frame(pheno_numeric)
   
-# Determine the number of PCs to use
-num_PCs <- min(num_significant_PCs, ncol(Beta))
-
-# Convert phenotypic variables to a data frame
-pheno_df <- as.data.frame(pheno_numeric)
-
-# Initialize a matrix to store the correlation coefficients
-corr_mat <- matrix(NA, nrow = ncol(pheno_df), ncol = num_PCs)
-rownames(corr_mat) <- colnames(pheno)
-colnames(corr_mat) <- paste0("PC", 1:num_PCs)
-
-# Loop through each PC and each phenotypic variable
-for (i in seq_len(num_PCs)) {
-pc_scores <- pca$x[, i]
-	for (j in seq_along(pheno_df)) {
-		pheno_var <- pheno_df[[j]]
-		
-		# Skip variables with zero variance to avoid errors
-		if (sd(pheno_var) == 0) next
-		
-		# Perform the correlation test
-		test <- cor.test(pc_scores, pheno_var)
-		
-		# Save the rounded correlation if the p-value is below the threshold
-		#if (test$p.value < p_threshold) {
-		corr_mat[j, i] <- round(test$estimate, 2)
-		#}
-	}
-}
+  # Determine number of PCs to use
+  num_PCs <- min(num_significant_PCs, ncol(Beta))
   
-  correlation_frame  = corr_mat
-  # Initialize a matrix to store the p-values
-pvalue_mat <- matrix(NA, nrow = ncol(pheno_df), ncol = num_PCs)
-rownames(pvalue_mat) <- colnames(pheno_df)
-colnames(pvalue_mat) <- paste0("PC", 1:num_PCs)
-
-# Loop through each PC and each phenotypic variable
-for (i in seq_len(num_PCs)) {
-  pc_scores <- pca$x[, i]
-  for (j in seq_along(pheno_df)) {
-    pheno_var <- pheno_df[[j]]
-    
-    # Skip variables with zero variance to avoid errors
-    if (sd(pheno_var) == 0) next
-    
-    # Perform the correlation test
-    test <- cor.test(pc_scores, pheno_var)
-    
-    # Save the rounded p-value (to 4 decimal places)
-    pvalue_mat[j, i] <- round(test$p.value, 4)
+  # Initialize matrices to store correlations and p-values
+  # (Use colnames from pheno_df to ensure the lengths match the number of numeric variables)
+  corr_mat <- matrix(NA, nrow = ncol(pheno_df), ncol = num_PCs)
+  rownames(corr_mat) <- colnames(pheno_df)
+  colnames(corr_mat) <- paste0("PC", 1:num_PCs)
+  
+  pvalue_mat <- matrix(NA, nrow = ncol(pheno_df), ncol = num_PCs)
+  rownames(pvalue_mat) <- colnames(pheno_df)
+  colnames(pvalue_mat) <- paste0("PC", 1:num_PCs)
+  
+  # Loop through PCs and phenotypic variables to compute correlations and p-values
+  for (i in seq_len(num_PCs)) {
+    pc_scores <- pca$x[, i]
+    for (j in seq_along(pheno_df)) {
+      pheno_var <- pheno_df[[j]]
+      if (sd(pheno_var) == 0) next  # skip zero variance variables
+      
+      test <- cor.test(pc_scores, pheno_var)
+      corr_mat[j, i] <- round(test$estimate, 2)
+      pvalue_mat[j, i] <- round(test$p.value, 4)
+    }
   }
-}
-
-# Convert the matrix to a data frame for easier handling
-correlation_frame_p <- as.data.frame(pvalue_mat)
   
-  ### Plot individual PC vs phenotype plots using ggplot2
+  correlation_frame <- corr_mat
+  correlation_frame_p <- as.data.frame(pvalue_mat)
+  
+  ### Plot individual PC vs. phenotype plots using ggplot2
   plot_path <- file.path(output_dir, paste0("01_PCA_Plots_", savename, ".pdf"))
   pdf(file = plot_path, width = 8, height = 6)
   
@@ -184,19 +153,13 @@ correlation_frame_p <- as.data.frame(pvalue_mat)
       var_name <- rownames(correlation_frame)[max_idx]
       corr_value <- col_corrs[max_idx]
       
-      # Define plot title and y-axis label
       main_title <- paste0("PC ", PC, " - ", var_name, " (", corr_value, ")")
       rel_var_text <- paste0("PC ", PC, " (", round(rel_variance[PC] * 100, 1), "% variance)")
       
-      # Retrieve the phenotype data for the best-correlated variable
       phenotype_data <- pheno[, var_name]
       
-      # Create enhanced plots based on the variable type
       if (is.numeric(phenotype_data)) {
-        # Prepare data frame for plotting
         plot_data <- data.frame(phenotype = phenotype_data, PC = pca$x[, PC])
-        
-        # Calculate linear model to add regression line and extract metrics
         lm_model <- stats::lm(PC ~ phenotype, data = plot_data)
         r2_val <- summary(lm_model)$r.squared
         corr_test <- stats::cor.test(plot_data$phenotype, plot_data$PC)
@@ -214,7 +177,6 @@ correlation_frame_p <- as.data.frame(pvalue_mat)
         
         print(p)
       } else {
-        # For categorical data, treat the phenotype as a factor and use a boxplot with jitter
         plot_data <- data.frame(phenotype = factor(phenotype_data), PC = pca$x[, PC])
         p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = phenotype, y = PC, fill = phenotype)) +
           ggplot2::geom_boxplot(alpha = 0.7) +
@@ -227,7 +189,6 @@ correlation_frame_p <- as.data.frame(pvalue_mat)
         print(p)
       }
       
-      # Print console message with highlighting if correlation is strong
       if (abs(corr_value) > 0.3) {
         corr_value_text <- paste0("\033[32m", corr_value, "\033[0m")
         var_name_text <- paste0("\033[32m", var_name, "\033[0m")
@@ -263,130 +224,105 @@ correlation_frame_p <- as.data.frame(pvalue_mat)
   }
   dev.off()
   
-  ### Create additional pairwise PC plots for the PCs with strong phenotype correlations
-# Filter for PCs with absolute correlation > 0.3
-selected_detail <- detailed_correlations[!is.na(detailed_correlations$Correlation) & 
-                                           abs(detailed_correlations$Correlation) > 0.3, ]
-if (nrow(selected_detail) >= 2) {
-  pairwise_path <- file.path(output_dir, paste0("01_PCA_PairwisePlots_", savename, ".pdf"))
-  pdf(file = pairwise_path, width = 8, height = 6)
-  
-  # Ensure gridExtra is available for arranging plots when needed
-  if (!requireNamespace("gridExtra", quietly = TRUE)) {
-    stop("Package 'gridExtra' is required for arranging plots when both phenotypes have many unique values.")
-  }
-  
-  # Get the list of PC indices that meet the criteria
-  pcs <- selected_detail$PC
-  # Create pairwise combinations
-  combs <- utils::combn(pcs, 2)
-  
-  for (i in 1:ncol(combs)) {
-    pc1 <- combs[1, i]
-    pc2 <- combs[2, i]
-    # Get the best correlated phenotype for each selected PC
-    var1 <- selected_detail$Variable[selected_detail$PC == pc1]
-    var2 <- selected_detail$Variable[selected_detail$PC == pc2]
+  ### Create pairwise PC plots for PCs with strong phenotype correlations
+  selected_detail <- detailed_correlations[!is.na(detailed_correlations$Correlation) & 
+                                             abs(detailed_correlations$Correlation) > 0.3, ]
+  if (nrow(selected_detail) >= 2) {
+    pairwise_path <- file.path(output_dir, paste0("01_PCA_PairwisePlots_", savename, ".pdf"))
+    pdf(file = pairwise_path, width = 8, height = 6)
     
-    # Prepare a data frame with the two PC scores and corresponding phenotype variables
-    plot_data <- data.frame(
-      PC1 = pca$x[, pc1],
-      PC2 = pca$x[, pc2],
-      Phenotype1 = as.factor(pheno[, var1]),
-      Phenotype2 = as.factor(pheno[, var2])
-    )
-    
-    # Compute Pearson correlation between PC1 and PC2
-    pc_cor <- stats::cor(plot_data$PC1, plot_data$PC2)
-    
-    # Determine aesthetic mapping based on number of unique values in each phenotype
-    threshold <- 6  # threshold for "low" unique counts
-    n_unique1 <- length(unique(pheno[, var1]))
-    n_unique2 <- length(unique(pheno[, var2]))
-    
-    # Case 1: Both phenotypes have many unique values
-    if (n_unique1 > threshold & n_unique2 > threshold) {
-      # Plot A: Use Phenotype1 for color, fixed shape (e.g., shape=16)
-      p1 <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2, color = Phenotype1)) +
-        ggplot2::geom_point(shape = 16, size = 2) +
-        ggplot2::labs(title = paste0("PC", pc1, " vs PC", pc2, " (Plot A)"),
-                      subtitle = paste0("Correlation = ", round(pc_cor, 2),
-                                        " | Phenotype1 (color): ", var1),
-                      x = paste0("PC", pc1, " (", round(rel_variance[pc1] * 100, 1), "% variance)"),
-                      y = paste0("PC", pc2, " (", round(rel_variance[pc2] * 100, 1), "% variance)")) +
-        ggplot2::theme_minimal()
-      
-      # Plot B: Use Phenotype2 for color, fixed shape
-      p2 <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2, color = Phenotype2)) +
-        ggplot2::geom_point(shape = 16, size = 2) +
-        ggplot2::labs(title = paste0("PC", pc1, " vs PC", pc2, " (Plot B)"),
-                      subtitle = paste0("Correlation = ", round(pc_cor, 2),
-                                        " | Phenotype2 (color): ", var2),
-                      x = paste0("PC", pc1, " (", round(rel_variance[pc1] * 100, 1), "% variance)"),
-                      y = paste0("PC", pc2, " (", round(rel_variance[pc2] * 100, 1), "% variance)")) +
-        ggplot2::theme_minimal()
-      
-      # Arrange the two plots vertically on one page
-      gridExtra::grid.arrange(p1, p2, ncol = 1)
-      
-    } else if (n_unique1 > threshold) {
-      # Case 2: Only Phenotype1 has many unique values; use it for color and Phenotype2 for shape
-      p_pair <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2, color = Phenotype1, shape = Phenotype2)) +
-        ggplot2::geom_point(size = 2) +
-        ggplot2::labs(title = paste0("PC", pc1, " vs PC", pc2),
-                      subtitle = paste0("Correlation = ", round(pc_cor, 2),
-                                        " | Phenotype1 (color): ", var1,
-                                        " | Phenotype2 (shape): ", var2),
-                      x = paste0("PC", pc1, " (", round(rel_variance[pc1] * 100, 1), "% variance)"),
-                      y = paste0("PC", pc2, " (", round(rel_variance[pc2] * 100, 1), "% variance)")) +
-        ggplot2::theme_minimal()
-      
-      print(p_pair)
-      
-    } else if (n_unique2 > threshold) {
-      # Case 3: Only Phenotype2 has many unique values; use it for color and Phenotype1 for shape
-      p_pair <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2, color = Phenotype2, shape = Phenotype1)) +
-        ggplot2::geom_point(size = 2) +
-        ggplot2::labs(title = paste0("PC", pc1, " vs PC", pc2),
-                      subtitle = paste0("Correlation = ", round(pc_cor, 2),
-                                        " | Phenotype1 (shape): ", var1,
-                                        " | Phenotype2 (color): ", var2),
-                      x = paste0("PC", pc1, " (", round(rel_variance[pc1] * 100, 1), "% variance)"),
-                      y = paste0("PC", pc2, " (", round(rel_variance[pc2] * 100, 1), "% variance)")) +
-        ggplot2::theme_minimal()
-      
-      print(p_pair)
-      
-    } else {
-      # Case 4: Both phenotypes have few unique values; default mapping
-      p_pair <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2, color = Phenotype1, shape = Phenotype2)) +
-        ggplot2::geom_point(size = 2) +
-        ggplot2::labs(title = paste0("PC", pc1, " vs PC", pc2),
-                      subtitle = paste0("Correlation = ", round(pc_cor, 2),
-                                        " | Phenotype1 (color): ", var1,
-                                        " | Phenotype2 (shape): ", var2),
-                      x = paste0("PC", pc1, " (", round(rel_variance[pc1] * 100, 1), "% variance)"),
-                      y = paste0("PC", pc2, " (", round(rel_variance[pc2] * 100, 1), "% variance)")) +
-        ggplot2::theme_minimal()
-      
-      print(p_pair)
+    if (!requireNamespace("gridExtra", quietly = TRUE)) {
+      stop("Package 'gridExtra' is required for arranging plots when both phenotypes have many unique values.")
     }
+    
+    pcs <- selected_detail$PC
+    combs <- utils::combn(pcs, 2)
+    
+    for (i in 1:ncol(combs)) {
+      pc1 <- combs[1, i]
+      pc2 <- combs[2, i]
+      var1 <- selected_detail$Variable[selected_detail$PC == pc1]
+      var2 <- selected_detail$Variable[selected_detail$PC == pc2]
+      
+      plot_data <- data.frame(
+        PC1 = pca$x[, pc1],
+        PC2 = pca$x[, pc2],
+        Phenotype1 = as.factor(pheno[, var1]),
+        Phenotype2 = as.factor(pheno[, var2])
+      )
+      
+      pc_cor <- stats::cor(plot_data$PC1, plot_data$PC2)
+      threshold <- 6
+      n_unique1 <- length(unique(pheno[, var1]))
+      n_unique2 <- length(unique(pheno[, var2]))
+      
+      if (n_unique1 > threshold & n_unique2 > threshold) {
+        p1 <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2, color = Phenotype1)) +
+          ggplot2::geom_point(shape = 16, size = 2) +
+          ggplot2::labs(title = paste0("PC", pc1, " vs PC", pc2, " (Plot A)"),
+                        subtitle = paste0("Correlation = ", round(pc_cor, 2),
+                                          " | Phenotype1 (color): ", var1),
+                        x = paste0("PC", pc1, " (", round(rel_variance[pc1] * 100, 1), "% variance)"),
+                        y = paste0("PC", pc2, " (", round(rel_variance[pc2] * 100, 1), "% variance)")) +
+          ggplot2::theme_minimal()
+        
+        p2 <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2, color = Phenotype2)) +
+          ggplot2::geom_point(shape = 16, size = 2) +
+          ggplot2::labs(title = paste0("PC", pc1, " vs PC", pc2, " (Plot B)"),
+                        subtitle = paste0("Correlation = ", round(pc_cor, 2),
+                                          " | Phenotype2 (color): ", var2),
+                        x = paste0("PC", pc1, " (", round(rel_variance[pc1] * 100, 1), "% variance)"),
+                        y = paste0("PC", pc2, " (", round(rel_variance[pc2] * 100, 1), "% variance)")) +
+          ggplot2::theme_minimal()
+        
+        gridExtra::grid.arrange(p1, p2, ncol = 1)
+      } else if (n_unique1 > threshold) {
+        p_pair <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2, color = Phenotype1, shape = Phenotype2)) +
+          ggplot2::geom_point(size = 2) +
+          ggplot2::labs(title = paste0("PC", pc1, " vs PC", pc2),
+                        subtitle = paste0("Correlation = ", round(pc_cor, 2),
+                                          " | Phenotype1 (color): ", var1,
+                                          " | Phenotype2 (shape): ", var2),
+                        x = paste0("PC", pc1, " (", round(rel_variance[pc1] * 100, 1), "% variance)"),
+                        y = paste0("PC", pc2, " (", round(rel_variance[pc2] * 100, 1), "% variance)")) +
+          ggplot2::theme_minimal()
+        
+        print(p_pair)
+      } else if (n_unique2 > threshold) {
+        p_pair <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2, color = Phenotype2, shape = Phenotype1)) +
+          ggplot2::geom_point(size = 2) +
+          ggplot2::labs(title = paste0("PC", pc1, " vs PC", pc2),
+                        subtitle = paste0("Correlation = ", round(pc_cor, 2),
+                                          " | Phenotype1 (shape): ", var1,
+                                          " | Phenotype2 (color): ", var2),
+                        x = paste0("PC", pc1, " (", round(rel_variance[pc1] * 100, 1), "% variance)"),
+                        y = paste0("PC", pc2, " (", round(rel_variance[pc2] * 100, 1), "% variance)")) +
+          ggplot2::theme_minimal()
+        
+        print(p_pair)
+      } else {
+        p_pair <- ggplot2::ggplot(plot_data, ggplot2::aes(x = PC1, y = PC2, color = Phenotype1, shape = Phenotype2)) +
+          ggplot2::geom_point(size = 2) +
+          ggplot2::labs(title = paste0("PC", pc1, " vs PC", pc2),
+                        subtitle = paste0("Correlation = ", round(pc_cor, 2),
+                                          " | Phenotype1 (color): ", var1,
+                                          " | Phenotype2 (shape): ", var2),
+                        x = paste0("PC", pc1, " (", round(rel_variance[pc1] * 100, 1), "% variance)"),
+                        y = paste0("PC", pc2, " (", round(rel_variance[pc2] * 100, 1), "% variance)")) +
+          ggplot2::theme_minimal()
+        
+        print(p_pair)
+      }
+    }
+    dev.off()
+  } else {
+    pairwise_path <- NA
   }
-  dev.off()
-} else {
-  pairwise_path <- NA
-}
-	# also make density plots because why not
-	# Beta <- toy_data$Beta    # Beta is a matrix with rows as features and columns as samples
-	# pheno <- toy_data$pheno  # pheno contains sample information
-	#RRtest::generateSamplePlotsForBetas(list(Beta = Beta, pheno=pheno),output_dir)
-	# errors!! nevermind
-
-	# show user where to find files
-	abs_path <- normalizePath(file.path(getwd(), output_dir), mustWork = FALSE)
-	message("Plots saved to: ", abs_path)
-	
-
+  
+  # Show the user where the files were saved
+  abs_path <- normalizePath(file.path(getwd(), output_dir), mustWork = FALSE)
+  message("Plots saved to: ", abs_path)
+  
   return(list(correlation_frame = correlation_frame,
               detailed_correlations = detailed_correlations,
               pca_result = pca,
