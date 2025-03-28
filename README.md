@@ -5,7 +5,7 @@
 
 
 #### Package definition
-The RRLab package was created as a personal package, filled with tools to help with (big-data) analysis and machine learning. The main interesting functions are RRFE and KDEA.
+The RRLab package was created as a personal package, filled with tools to help with (big-data) analysis and machine learning. The main interesting functions are RRFE and KDEA!
 
 ---
 
