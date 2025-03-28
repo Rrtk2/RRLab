@@ -1,11 +1,11 @@
-| [HOME](https://github.com/Rrtk2/RRtest)  |  [FUNCTIONS](https://github.com/Rrtk2/RRtest/blob/master/docs/Functions/FunctionsOverview.md)  | 
+| [HOME](https://github.com/Rrtk2/RRLab)  |  [FUNCTIONS](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/FunctionsOverview.md)  | 
 
-# R package: RRtest
-[![GitHub License](https://img.shields.io/github/license/Rrtk2/RRtest)](https://github.com/Rrtk2/RRtest/blob/master/LICENSE.md) ![](https://img.shields.io/badge/Status-Setting_up-red) [![GitHub Watches](https://img.shields.io/github/watchers/Rrtk2/RRtest.svg?style=social&label=Watch&maxAge=2592000)](https://github.com/Rrtk2/RRtest/watchers) 
+# R package: RRLab
+[![GitHub License](https://img.shields.io/github/license/Rrtk2/RRLab)](https://github.com/Rrtk2/RRLab/blob/master/LICENSE.md) ![](https://img.shields.io/badge/Status-Setting_up-red) [![GitHub Watches](https://img.shields.io/github/watchers/Rrtk2/RRLab.svg?style=social&label=Watch&maxAge=2592000)](https://github.com/Rrtk2/RRLab/watchers) 
 
 
 #### Package definition
-The RRtest package was created as a personal package, filled with tools to help with (big-data) analysis and machine learning. The main interesting functions are RRFE and KDEA.
+The RRLab package was created as a personal package, filled with tools to help with (big-data) analysis and machine learning. The main interesting functions are RRFE and KDEA.
 
 ---
 
@@ -33,9 +33,9 @@ First, you need to install the devtools package. You can do this from CRAN.
 install.packages("devtools")
 ```
 
-To install the RRtest package
+To install the RRLab package
 ```
-devtools::install_github("Rrtk2/RRtest/RRtest")
+devtools::install_github("Rrtk2/RRLab/RRLab")
 ```
 ---
 
@@ -58,4 +58,4 @@ Setting up. Big changes likely; many bugs.
 
 
 #### Copyright and authors
-All code and documents in the RRtest folder was created by [these author(s)](/AUTHORS.md).
+All code and documents in the RRLab folder was created by [these author(s)](/AUTHORS.md).

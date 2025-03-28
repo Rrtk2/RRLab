@@ -16,7 +16,7 @@ s_repeats = 10
 
 
 # set training / optimisation and control parameters
-fitControl <- trainControl(method = "repeatedcv", number = s_number, repeats = s_repeats,  search = "random")#, summaryFunction = twoClassSummary) # MCC / twoClassSummary / prSummary / RRtest::MCCx
+fitControl <- trainControl(method = "repeatedcv", number = s_number, repeats = s_repeats,  search = "random")#, summaryFunction = twoClassSummary) # MCC / twoClassSummary / prSummary / RRLab::MCCx
  
 
 fit <- train(Class ~ ., data = temp_data_train,

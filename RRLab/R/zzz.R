@@ -1,10 +1,10 @@
 .onAttach <- function(libname, pkgname) {
 
-	if (!isTRUE(getOption("RRtest.suppressStartup", FALSE))) {
+	if (!isTRUE(getOption("RRLab.suppressStartup", FALSE))) {
 		# Welcome message
-		#packageStartupMessage(cat("Welcome to the RRtest package! \nPlease help me improve at GitHub(RRtk2/RRtest)!\nPlease run devtools::install_github('RRtk2/RRtest/RRtest') to get the latest version.\n"))
+		#packageStartupMessage(cat("Welcome to the RRLab package! \nPlease help me improve at GitHub(RRtk2/RRLab)!\nPlease run devtools::install_github('RRtk2/RRLab/RRLab') to get the latest version.\n"))
 		
-		message <- "Welcome to the RRtest package!"
+		message <- "Welcome to the RRLab package!"
 		color_set <- c(0,1,0)           # Define a range of ANSI color codes
 		n <- nchar(message)        # Number of characters in the message
 
@@ -23,7 +23,7 @@
 		
 		}
 		cat("\n")
-		#cat("Please run devtools::install_github('RRtk2/RRtest/RRtest') to get the latest version.\n")
+		#cat("Please run devtools::install_github('RRtk2/RRLab/RRLab') to get the latest version.\n")
 	}
 
 	s_requiredpackages <- c("ggplot2", "ggfortify", "matlib", "fitdistrplus",

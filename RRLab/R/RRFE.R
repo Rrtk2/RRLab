@@ -24,76 +24,17 @@
 #' dataset = iris, f_dataset_class_column_id = which(colnames(iris)=="Species"), s_MinimalVariance = 0.5, s_MaxComponents = 50, s_KRepeats = 25, s_KmeansRepeat = 10, verbose = TRUE, ShowPlots = TRUE, s_MakeFilteredObject = TRUE
 #' @export
 
-RRFE_svm = function(dataset = NA, f_dataset_class_column_id = NA, s_AmountFeatures = NA, s_MinimalVariance = 0.5 , s_MaxComponents = 50,
-s_KRepeats = 25, s_KmeansRepeat = 10, verbose = TRUE, ShowPlots = FALSE,s_GetLoadingDistance = FALSE, s_AngleFilter = FALSE, s_MakeFilteredObject = FALSE, s_scale = FALSE, s_ZNorm = FALSE) {
+RRFE = function(dataset = NA, f_dataset_class_column_id = NA, s_AmountFeatures = NA, s_MinimalVariance = 0.5 , s_MaxComponents = 50,
+s_KRepeats = 25, s_KmeansRepeat = 10, verbose = TRUE, ShowPlots = FALSE,s_GetLoadingDistance = FALSE, s_AngleFilter = FALSE, s_MakeFilteredObject = FALSE, s_scale = FALSE, s_ZNorm = FALSE, s_ShowLoadingArrows = TRUE) {
 #-----------------------------------------------------------------------------------------------------#
 #								NOTES
 #-----------------------------------------------------------------------------------------------------#
 # http://tinyheero.github.io/jekyll/update/2015/07/26/making-your-first-R-package.html
 
-# devtools::load_all("D:\\Github\\PhD_Thesis\\Packages\\RRtest")
-# devtools::document("D:\\Github\\PhD_Thesis\\Packages\\RRtest")
-#	
-library(caret)
-library(data.table)
-library(doParallel)
-library(ggfortify)
-s_tuneLength = 1
-s_partitionlength = 0.8
-s_number = 2
-s_repeats = 2
-#-----------------------------------------------------------------------------------------------------#
-#							INTERNAL FUNCTIONS
-#-----------------------------------------------------------------------------------------------------#
-
-# set MCC function:
-MCC = function(OBSPRED, lev=NULL, model=NULL, showCM = FALSE){
-	df = data.frame(obs=as.character(OBSPRED$obs),pred=as.character(OBSPRED$pred))
-	
-	CM = table(df)
-	
-	#OBSPRED$obs <- factor(OBSPRED$obs, levels = lev)
-	if(names(labels(CM)[1]) == "obs"){CM = t(CM)}
-	
-	if((dim(CM)[1] == 2 & dim(CM)[2] == 2)){
-		
-		if(showCM){
-			cat("Confusion matrix:\n")
-			print(CM)
-			cat("\n")
-		}
-		
-		TP = CM[1,1]
-		FP = CM[1,2]
-		TN = CM[2,2]
-		FN = CM[2,1]
-		
-		# Convert types to double for better precision
-		TP <- as.double(TP)
-		FP <- as.double(FP)
-		TN <- as.double(TN)
-		FN <- as.double(FN)
-		
-		# Calculate MCC
-		numerator <- (TP * TN - FP * FN)
-		denominator <- sqrt((TP + FP)*(TP + FN)*(TN + FP)*(TN + FN))
-		if(denominator == 0) denominator <- 1
-		MCCval <- numerator/denominator
-		
-		#names(out) <- c("MCC")
-		AccuracyVal		=	((TP+TN)/((TP+TN)+(FP+FN)))
-		RecallVal		=	(TP)/(TP+ FP)
-		PrecisionVal	=	(TP) / (TP + FP)
-		F1val			=	2* ( (PrecisionVal*RecallVal) / (PrecisionVal+RecallVal) )
-		CombinedScVal 	= 	(MCCval + F1val)/2
-		out = c(MCCval,AccuracyVal,RecallVal, PrecisionVal,  F1val, CombinedScVal)
-	}else{
-		out = c(0,0,0, 0, 0, 0)
-	}	
-	names(out) = c("MCC","Accuracy","Recall","Precision","F1","CombinedScore")
-	if(showCM){print(out)}
-	return(out)
-}
+# devtools::load_all("D:\\Github\\RRLab\\RRLab")
+# devtools::load_all("C:/Users/p70072451/Documents/GitHub/RRLab/RRLab")
+# devtools::document("D:\\Github\\RRLab\\RRLab")
+# devtools::document("C:/Users/p70072451/Documents/GitHub/RRLab/RRLab")
 
 
 	#-----------------------------------------------------------------------------------------------------#
@@ -221,27 +162,13 @@ MCC = function(OBSPRED, lev=NULL, model=NULL, showCM = FALSE){
 	#							PCA
 	#-----------------------------------------------------------------------------------------------------#
 	# Do PCA and check how the dataset loks like
-	
-	#split data 
-	trainIndex <- createDataPartition(dataset_class, p = s_partitionlength, list = FALSE, times = 1)
-	
-	
-	train <- dataset_noclass[ trainIndex,]
-	dataset_class_train = dataset_class[ trainIndex] 
-	
-	test  <- dataset_noclass[-trainIndex,]
-	dataset_class_test = dataset_class[ -trainIndex] 
-	
-	
-	PCA = prcomp(train, scale = s_scale) # setting to true will wash away true effect? test dataset result is skewed then.
+	PCA = prcomp(dataset_noclass, scale = s_scale) # setting to true will wash away true effect? test dataset result is skewed then.
 	f_result$PCA = PCA
 
 	# Make PCA+loading plot. This indicates highes variance.
-	NormalPCAPlot = ggplot2:::autoplot(PCA, data = train, colour = as.numeric(as.factor(dataset_class_train)), loadings = TRUE, loadings.label = TRUE, loadings.label.size = 3, x = 1 ,y = 2, label = FALSE) + ggplot2::ggtitle("Optimal unsupervised contrast")
+	NormalPCAPlot = ggplot2:::autoplot(PCA, data = dataset_pre, colour = 'Class', loadings = s_ShowLoadingArrows, loadings.label = s_ShowLoadingArrows, loadings.label.size = 3, x = 1 ,y = 2, label = FALSE) + ggplot2::ggtitle("Optimal unsupervised contrast")
 	NormalPCAPlot
-	
-	NormalPCAPlot_nolabbels = ggplot2:::autoplot(PCA, data = train, colour = as.numeric(as.factor(dataset_class_train)), loadings = FALSE, x = 1 ,y = 2, label = FALSE) + ggplot2::ggtitle("Optimal unsupervised contrast")
-	NormalPCAPlot_nolabbels
+
 
 	#-----------------------------------------------------------------------------------------------------#
 	#							Start loop
@@ -264,12 +191,10 @@ MCC = function(OBSPRED, lev=NULL, model=NULL, showCM = FALSE){
 
 		counter = 0
 
-		
-
 		# Select starting centres; based on 1 point from each group.
 		selected_centeres = NULL
-		for( i in as.numeric(unique(dataset_class_train))){
-			Samplelist = which(dataset_class_train==unique(dataset_class_train)[i])
+		for( i in as.numeric(unique(dataset_class))){
+			Samplelist = which(dataset_class==unique(dataset_class)[i])
 			selected_centeres[i] = sample(Samplelist,1)
 		}
 		
@@ -285,49 +210,9 @@ MCC = function(OBSPRED, lev=NULL, model=NULL, showCM = FALSE){
 
 				# get the contrast
 				df = PCA$x[,c(i,o)]
-				df = data.frame(df, Class1 = as.factor(dataset_class_train))
-				# SVM 2d class detection prediction
 				
-					
-					# Kmeans check to speed up analysis
-					k2 <- kmeans(df[,-3], centers = df[selected_centeres,-3], nstart = s_KRepeats)
-					quickscore = abs((sum(as.factor(k2$cluster)==as.numeric(as.factor(df[,3])))/maxscore)-0.5)*2
-					cat(paste0(p,"_",i,"_",o,":",quickscore,"\n"))
-					if(quickscore>0.4){
-					
-						fitControl <- trainControl(method = "repeatedcv", number = s_number, repeats = s_repeats, search = "random", summaryFunction = MCC)#,classProb=TRUE,,
-						
-						# Start Multi-core processing
-						#cl <- makePSOCKcluster(max(1,detectCores()-1))
-						#registerDoParallel(cl)
-
-						# start traingin
-						fit <- train(Class1 ~ ., data = df,
-						metric="MCC",
-						method = "svmLinear",
-						tuneLength = s_tuneLength,
-						trControl = fitControl)
-						#preProcess=c("center", "scale"))
-
-						#stop Multi-core processing -> if fails -> registerDoSEQ()
-						#stopCluster(cl)
-
-						assign(x = 'fit',fit)
-						## Loading required package: rpart
-						#fit
-						
-						
-						# fit test data into this PCA space and test using ML model
-						df_test = scale(test, PCA$center, PCA$scale) %*% PCA$rotation 
-						df_test = data.frame(df_test, Class1 = as.factor(dataset_class_test))
-
-						# Predict test set using new model
-						predictions_test <- predict(fit, df_test)
-						RES = MCC(data.frame(pred=predictions_test, obs=df_test$Class1))["MCC"]
-						cat(paste0("SVM:",RES,"\n"))
-					}else{
-						RES = 0
-					}
+				# 1-sample class seeded k-means
+				k2 <- kmeans(df, centers = df[selected_centeres,], nstart = s_KRepeats)
 
 				# Make scoring table
 				score_df[counter,1] = i
@@ -339,7 +224,7 @@ MCC = function(OBSPRED, lev=NULL, model=NULL, showCM = FALSE){
 				# results are based on ((match/maxmatch)-0.5)*2
 				# This is due the 2 cases it can be (match/nomatch) and is used to overcome groupswaps. (eg. all samples within A group belong to class 2; while kmeans CALLS this group 1; The prediction is perfect, but the class is not. -> abs ( (99/100) - 0.5)*2 = 0.98. Poor performing classes will have chance (50%); abs ( (49/100) - 0.5)*2 = 0.02
 
-				score_df[counter,p+2] = RES
+				score_df[counter,p+2] = abs((sum(as.factor(k2$cluster)==as.numeric(as.factor(dataset_class)))/maxscore)-0.5)*2
 			}
 		}
 	}
@@ -373,14 +258,9 @@ MCC = function(OBSPRED, lev=NULL, model=NULL, showCM = FALSE){
 	# Replicate kmeans results for image
 	k2 <- kmeans(PCA$x[,Resulting_contrast], centers = PCA$x[selected_centeres,Resulting_contrast], nstart = s_KRepeats)
 
-	#transform the inital data to the 
-
-
 	# Make PCA+loading plot. This indicates best contrast to explain classes.
-	KmeansPlot = ggplot2::autoplot(PCA, data = train, colour = as.numeric(dataset_class_train), loadings = TRUE, loadings.label = TRUE, loadings.label.size = 5, x = Resulting_contrast[1] ,y = Resulting_contrast[2],shape = k2$cluster+14, label = FALSE) + ggplot2::ggtitle("Optimal supervised contrast") #+geom_polygon(data = hull1, alpha = 0.3)
+	KmeansPlot = ggplot2::autoplot(PCA, data = dataset_pre, colour = 'Class', loadings = s_ShowLoadingArrows, loadings.label = s_ShowLoadingArrows, loadings.label.size = 5, x = Resulting_contrast[1] ,y = Resulting_contrast[2],shape = k2$cluster+14, label = FALSE) + ggplot2::ggtitle("Optimal supervised contrast") #+geom_polygon(data = hull1, alpha = 0.3)
 
-	# Make PCA+loading plot. This indicates best contrast to explain classes.
-	KmeansPlot_NL = ggplot2::autoplot(PCA, data = train, colour = as.numeric(dataset_class_train), loadings = FALSE, loadings.label = FALSE, loadings.label.size = 5, x = Resulting_contrast[1] ,y = Resulting_contrast[2],shape = k2$cluster+14, label = FALSE) + ggplot2::ggtitle("Optimal supervised contrast") #+geom_polygon(data = hull1, alpha = 0.3)
 
 	#-----------------------------------------------------------------------------------------------------#
 	#							Extract the most important features for both components
@@ -499,7 +379,7 @@ MCC = function(OBSPRED, lev=NULL, model=NULL, showCM = FALSE){
 		a = PCA
 
 		# Plot best contrast
-		ggplot2::autoplot(a, data = dataset_pre, colour = 'Class', loadings = TRUE, loadings.label = TRUE, loadings.label.size = 5, x = Resulting_contrast[1] ,y = Resulting_contrast[2],shape = k2$cluster+14, label = FALSE) + ggplot2::ggtitle("Optimal supervised contrast") #+geom_polygon(data = hull1, alpha = 0.3)
+		ggplot2::autoplot(a, data = dataset_pre, colour = 'Class', loadings = s_ShowLoadingArrows, loadings.label = s_ShowLoadingArrows, loadings.label.size = 5, x = Resulting_contrast[1] ,y = Resulting_contrast[2],shape = k2$cluster+14, label = FALSE) + ggplot2::ggtitle("Optimal supervised contrast") #+geom_polygon(data = hull1, alpha = 0.3)
 
 		#selct class1
 		selectlevel1 = which(dataset[,ClassID]==levels(dataset[,ClassID])[1])
