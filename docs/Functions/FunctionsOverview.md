@@ -2,6 +2,8 @@
 
 ### Functions
 
+[libraryR](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/libraryR.md)
+
 [KDEA](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/KDEA.md)
 
 [RRFE](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/RRFE.md)
