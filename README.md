@@ -5,7 +5,7 @@
 
 
 ## Package definition
-The RRLab package was created as a personal package, filled with tools to help with (big-data) analysis and machine learning. The main interesting functions are RRFE and KDEA!
+RRLab is a growing collection of experimental techniques and quality-of-life tools born from years of hands-on data science, modeling, and exploration. Built as a personal lab bench in R, it reflects a constant search for better ways to understand high-dimensional data, test bold ideas, and streamline the grind of daily analysis. The main interesting functions are RRFE and KDEA! Best QOL function is libraryR!
 
 ---
 ## Function examples
