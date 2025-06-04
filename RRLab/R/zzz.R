@@ -1,24 +1,25 @@
 
 check_rrlab_update <- function() {
-  remote_version <- tryCatch({
-    con <- url("https://raw.githubusercontent.com/Rrtk2/RRLab/master/RRLab/DESCRIPTION")
-    on.exit(close(con), add = TRUE)
-    desc_text <- readLines(con, warn = FALSE)
-    desc <- read.dcf(textConnection(desc_text))
-    desc[1, "Version"]
+
+  local_sha <- utils::packageDescription("RRLab")$GithubSHA1
+
+  if (is.null(local_sha) || is.na(local_sha))
+    return(invisible(FALSE))
+
+  remote_sha <- tryCatch({
+    jsonlite::fromJSON(
+      "https://api.github.com/repos/Rrtk2/RRLab/commits/master"
+    )$sha
   }, error = function(e) NA_character_)
 
-  local_version <- utils::packageDescription("RRLab")$Version
-
-  if (!is.na(remote_version) &&
-      utils::compareVersion(as.character(remote_version), as.character(local_version)) > 0) {
+  if (!is.na(remote_sha) && !identical(remote_sha, local_sha)) {
     packageStartupMessage(
-      sprintf(
-        "A newer version of RRLab (%s) is available. Run devtools::install_github('Rrtk2/RRLab/RRLab') to update.",
-        remote_version
-      )
+      "A newer version of RRLab is available. Run devtools::install_github('Rrtk2/RRLab/RRLab') to update."
     )
   }
+
+  invisible(TRUE)
+
 }
 
 .onAttach <- function(libname, pkgname) {

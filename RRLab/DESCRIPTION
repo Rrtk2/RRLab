@@ -11,5 +11,5 @@ LazyData: true
 RoxygenNote: 7.3.1
 Imports: ggplot2, ggfortify, matlib, fitdistrplus, caret, limma,
         tidyverse, ggsci, showtext, foreach, doParallel, parallel,
-        progress, data.table, splitstackshape
+        progress, data.table, splitstackshape, jsonlite
 
