@@ -31,7 +31,7 @@
                         "foreach", "doParallel", "parallel", "progress",
                         "data.table", "splitstackshape")
 
-  RRLab::libraryR(s_requiredpackages)
+  RRLab::libraryR(c(s_requiredpackages))
 
 
 }

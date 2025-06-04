@@ -23,4 +23,8 @@ libraryR(c("limma", "missMethyl"))
 # Also works with unquoted names (non-standard evaluation)
 libraryR(dplyr)
 
+# Package names can also be stored in a vector
+pkgs <- c("ggplot2", "dplyr")
+libraryR(pkgs)
+
 }
