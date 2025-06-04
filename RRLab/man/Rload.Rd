@@ -4,13 +4,13 @@
 \alias{Rload}
 \title{Rload}
 \usage{
-Rload(name, prefix = "", postfix = "", file_location = s_saveloc_qc, envir = parent.frame(), ...)
+Rload(name, prefix = "", postfix = "", file_location = NULL, envir = parent.frame(), ...)
 }
 \arguments{
 \item{name}{Object or file name to load.}
 \item{prefix}{Optional prefix used during saving.}
 \item{postfix}{Optional postfix used during saving.}
-\item{file_location}{Directory of the saved file. Defaults to \code{s_saveloc_qc}.}
+\item{file_location}{Directory of the saved file. If \code{NULL}, \code{s_saveloc_qc} will be used when available.}
 \item{envir}{Environment to load the object into. Defaults to the caller's environment.}
 \item{...}{Additional arguments passed to \code{qs::qload}.}
 }
