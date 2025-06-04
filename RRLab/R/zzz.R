@@ -1,3 +1,26 @@
+
+check_rrlab_update <- function() {
+  remote_version <- tryCatch({
+    con <- url("https://raw.githubusercontent.com/Rrtk2/RRLab/master/RRLab/DESCRIPTION")
+    on.exit(close(con), add = TRUE)
+    desc_text <- readLines(con, warn = FALSE)
+    desc <- read.dcf(textConnection(desc_text))
+    desc[1, "Version"]
+  }, error = function(e) NA_character_)
+
+  local_version <- utils::packageDescription("RRLab")$Version
+
+  if (!is.na(remote_version) &&
+      utils::compareVersion(as.character(remote_version), as.character(local_version)) > 0) {
+    packageStartupMessage(
+      sprintf(
+        "A newer version of RRLab (%s) is available. Run devtools::install_github('Rrtk2/RRLab/RRLab') to update.",
+        remote_version
+      )
+    )
+  }
+}
+
 .onAttach <- function(libname, pkgname) {
 
 	if (!isTRUE(getOption("RRLab.suppressStartup", FALSE))) {
@@ -32,6 +55,8 @@
                         "data.table", "splitstackshape")
 
   RRLab::libraryR(c(s_requiredpackages))
+
+  check_rrlab_update()
 
 
 }

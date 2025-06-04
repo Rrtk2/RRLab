@@ -49,6 +49,8 @@ To install the RRLab package
 ```
 devtools::install_github("Rrtk2/RRLab/RRLab")
 ```
+Once loaded with `library(RRLab)`, the package automatically checks GitHub for
+new releases and notifies you if an update is available.
 ---
 
 ## Contributing
