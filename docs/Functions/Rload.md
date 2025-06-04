@@ -2,18 +2,18 @@
 
 # Rload Function
 
-`Rload()` compliments `Rsave()` by loading a previously saved object with `qs::qload`. Provide an object or file name base and it rebuilds the path using the same prefix/postfix logic.
+`Rload()` compliments `Rsave()` by loading a previously saved object with `qs::qload`. Provide an object or file name base and it rebuilds the path using the same prefix/postfix logic. When `file_location` is `NULL`, `s_saveloc_qc` is used if available.
 
 ## Usage
 ```R
-Rload(name, prefix = "", postfix = "", file_location = s_saveloc_qc, envir = parent.frame(), ...)
+Rload(name, prefix = "", postfix = "", file_location = NULL, envir = parent.frame(), ...)
 ```
 
 ## Parameters
 - `name`: The object or file name to load.
 - `prefix`: Optional prefix that was used when saving.
 - `postfix`: Optional postfix used when saving.
-- `file_location`: Directory of the saved object, defaults to `s_saveloc_qc`.
+- `file_location`: Directory of the saved object. If `NULL`, `s_saveloc_qc` is used when available.
 - `envir`: Environment to load the object into. Default is the caller's environment.
 
 ## Returns

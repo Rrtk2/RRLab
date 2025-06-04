@@ -4,20 +4,20 @@
 \alias{Rsave}
 \title{Rsave}
 \usage{
-Rsave(object, prefix = "", postfix = "", file_location = s_saveloc_qc, ...)
+Rsave(object, prefix = "", postfix = "", file_location = NULL, ...)
 }
 \arguments{
 \item{object}{Object to save or the name of the object.}
 \item{prefix}{Optional prefix for the file name.}
 \item{postfix}{Optional postfix for the file name.}
-\item{file_location}{Directory where the file will be saved. Defaults to \code{s_saveloc_qc}.}
+\item{file_location}{Directory where the file will be saved. If \code{NULL}, \code{s_saveloc_qc} will be used when available.}
 \item{...}{Additional arguments passed to \code{qs::qsavem}.}
 }
 \value{
 Invisibly returns the path used to save the object.
 }
 \description{
-Convenience wrapper around \code{qs::qsavem} that saves an object by its R name. You can specify a prefix, postfix and file location. The default directory is \code{s_saveloc_qc}.
+Convenience wrapper around \code{qs::qsavem} that saves an object by its R name. You can specify a prefix, postfix and file location. If \code{file_location} is omitted, \code{s_saveloc_qc} will be used when available.
 }
 \examples{
 a <- 1:5
