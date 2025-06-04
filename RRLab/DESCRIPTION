@@ -1,7 +1,7 @@
 Package: RRLab
 Type: Package
 Title: Rick Reijnders's Miscellaneous Functions
-Version: 0.0.0.1000
+Version: 0.0.0.1001
 Authors@R: person("Rick", "Reijnders", email = "Rick.Reijnders@home.nl", role = c("aut", "cre"))
 Description: Contains many functions useful for data analysis, high-level graphics, utility operations, and other functions.
 License: GPL (>= 3)
@@ -11,5 +11,5 @@ LazyData: true
 RoxygenNote: 7.3.1
 Imports: ggplot2, ggfortify, matlib, fitdistrplus, caret, limma,
         tidyverse, ggsci, showtext, foreach, doParallel, parallel,
-        progress, data.table, splitstackshape
+        progress, data.table, splitstackshape, jsonlite
 

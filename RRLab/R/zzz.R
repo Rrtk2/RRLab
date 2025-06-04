@@ -1,3 +1,25 @@
+
+check_rrlab_update <- function() {
+  local_sha <- utils::packageDescription("RRLab")$GithubSHA1
+
+  if (is.null(local_sha) || is.na(local_sha))
+    return(invisible(FALSE))
+
+  remote_sha <- tryCatch({
+    jsonlite::fromJSON(
+      "https://api.github.com/repos/Rrtk2/RRLab/commits/master"
+    )$sha
+  }, error = function(e) NA_character_)
+
+  if (!is.na(remote_sha) && !identical(remote_sha, local_sha)) {
+    packageStartupMessage(
+      "A newer version of RRLab is available. Run devtools::install_github('Rrtk2/RRLab/RRLab') to update."
+    )
+  }
+
+  invisible(TRUE)
+}
+
 .onAttach <- function(libname, pkgname) {
 
 	if (!isTRUE(getOption("RRLab.suppressStartup", FALSE))) {
@@ -32,6 +54,8 @@
                         "data.table", "splitstackshape")
 
   RRLab::libraryR(c(s_requiredpackages))
+
+  check_rrlab_update()
 
 
 }
