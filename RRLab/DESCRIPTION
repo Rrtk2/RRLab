@@ -13,3 +13,4 @@ Imports: ggplot2, ggfortify, matlib, fitdistrplus, caret, limma,
         tidyverse, ggsci, showtext, foreach, doParallel, parallel,
         progress, data.table, splitstackshape
 Suggests: testthat
+
