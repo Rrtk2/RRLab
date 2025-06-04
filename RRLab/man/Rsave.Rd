@@ -4,23 +4,33 @@
 \alias{Rsave}
 \title{Rsave}
 \usage{
-Rsave(object, prefix = "", postfix = "", file_location = NULL, ...)
+Rsave(object_name, prefix = "", postfix = "", file_location = NULL, ...)
 }
 \arguments{
-\item{object}{Object to save or the name of the object.}
 \item{prefix}{Optional prefix for the file name.}
+
 \item{postfix}{Optional postfix for the file name.}
-\item{file_location}{Directory where the file will be saved. If \code{NULL}, \code{s_saveloc_qc} will be used when available.}
-\item{...}{Additional arguments passed to \code{qs::qsavem}.}
+
+\item{file_location}{Directory where the file will be saved. If `NULL`,
+`s_saveloc_qc` will be used when available.}
+
+\item{...}{Additional arguments passed to `qs::qsavem`.}
+
+\item{object}{Object to save or the name of the object.}
 }
 \value{
-Invisibly returns the path used to save the object.
+Invisibly returns the file path used.
 }
 \description{
-Convenience wrapper around \code{qs::qsavem} that saves an object by its R name. You can specify a prefix, postfix and file location. If \code{file_location} is omitted, \code{s_saveloc_qc} will be used when available.
+Convenience wrapper around `qs::qsavem` that saves an object using its
+name in the calling environment. A prefix and postfix can be supplied to
+modify the file name. If `file_location` is not supplied, `s_saveloc_qc`
+will be used when available.
 }
 \examples{
+\dontrun{
 a <- 1:5
 Rsave(a)
 Rsave(a, prefix = "08A", postfix = "cohort")
+}
 }

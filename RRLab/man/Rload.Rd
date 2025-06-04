@@ -4,23 +4,45 @@
 \alias{Rload}
 \title{Rload}
 \usage{
-Rload(name, prefix = "", postfix = "", file_location = NULL, envir = parent.frame(), ...)
+Rload(
+  name,
+  prefix = "",
+  postfix = "",
+  file_location = NULL,
+  envir = parent.frame(),
+  ...
+)
 }
 \arguments{
-\item{name}{Object or file name to load.}
+\item{name}{Object or character string identifying the file to load.}
+
 \item{prefix}{Optional prefix used during saving.}
+
 \item{postfix}{Optional postfix used during saving.}
-\item{file_location}{Directory of the saved file. If \code{NULL}, \code{s_saveloc_qc} will be used when available.}
-\item{envir}{Environment to load the object into. Defaults to the caller's environment.}
-\item{...}{Additional arguments passed to \code{qs::qload}.}
+
+\item{file_location}{Directory of the saved file. If `NULL`, `s_saveloc_qc`
+is used when available.}
+
+\item{envir}{Environment to load the object into. Defaults to the caller's
+environment.}
+
+\item{...}{Additional arguments passed to `qs::qload`.}
 }
 \value{
-Invisibly returns the result of \code{qs::qload}.
+Invisibly returns the result of `qs::qload`.
 }
 \description{
-Wrapper around \code{qs::qload} to read objects saved with \code{Rsave}. The input can be either an object or a character string naming the saved file (without extension). Prefix and postfix must match the ones used when saving.
+Wrapper around `qs::qload` to read objects saved with `Rsave`.
+If `name` is an object, its name will be used to construct the
+file name using the supplied prefix and postfix. Alternatively a
+character string can be provided to directly specify the base file
+name. If `file_location` is not provided, the function attempts to use
+`s_saveloc_qc` from the calling environment. If neither is available an
+error is thrown.
 }
 \examples{
+\dontrun{
 Rload(a)
 Rload("08A_a_cohort")
+}
 }
