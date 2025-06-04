@@ -34,7 +34,7 @@
 
 
 ProjectTimePCA = function(Data_t0=NA, Data_t1=NA,ClassColumnID=NA){
-	library(ggfortify)
+        RRLab::libraryR("ggfortify")
 
 	ResultObject = list()
 	# Get PCA object

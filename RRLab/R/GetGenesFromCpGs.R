@@ -12,7 +12,7 @@ GetGenesFromCpGs = function(sig.cpg = NA){
     if(is.na(sig.cpg)){stop("Please enter any CpGs (as character)")}
 
     array.type = "EPIC"
-    require(IlluminaHumanMethylationEPICanno.ilm10b4.hg19)
+    RRLab::libraryR("IlluminaHumanMethylationEPICanno.ilm10b4.hg19")
     flatu <- missMethyl:::.getFlatAnnotation(array.type)
 
     m_all <- match(flatu$cpg, sig.cpg)

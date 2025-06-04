@@ -31,12 +31,7 @@
                         "foreach", "doParallel", "parallel", "progress",
                         "data.table", "splitstackshape")
 
-  for (pkg in s_requiredpackages) {
-          suppressPackageStartupMessages(
-                  library(pkg, character.only = TRUE, quietly = TRUE,
-                          warn.conflicts = FALSE)
-          )
-  }
+  RRLab::libraryR(s_requiredpackages)
 
 
 }
