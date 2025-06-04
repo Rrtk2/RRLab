@@ -12,6 +12,9 @@
 #' # Also works with unquoted names (non-standard evaluation)
 #' libraryR(dplyr)
 #'
+#' # Calling it on RRLab itself triggers a colourful message
+#' libraryR("RRLab")
+#'
 #' # Package names can also be stored in a vector
 #' pkgs <- c("ggplot2", "dplyr")
 #' libraryR(pkgs)
@@ -60,6 +63,24 @@ libraryR = function(pkg) {
     
     suppressPackageStartupMessages(library(p, character.only = TRUE))
     cli::cli_alert_success("Loaded {.pkg {p}}{if (installed_now) ' after install' else ''}.")
+
+    if (identical(p, "RRLab")) {
+      msg <- "Achievement unlocked: you loaded RRLab with libraryR!"
+      color_set <- c(32, 33, 35, 36, 31, 34)
+      n <- nchar(msg)
+
+      for (iter in seq_along(color_set)) {
+        cat("\r")
+        for (i in seq_len(n)) {
+          letter <- substr(msg, i, i)
+          cat(paste0("\033[", color_set[iter], "m", letter, "\033[0m"))
+          Sys.sleep(0.005)
+        }
+        flush.console()
+      }
+      cat("\n")
+    }
+
     results[p] = TRUE
   }
   
