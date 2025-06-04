@@ -15,7 +15,7 @@ The function returns a list containing two elements:
 ## Examples
 ```R
 # Load the required package
-library(fitdistrplus)
+RRLab::libraryR(fitdistrplus)
 
 # Example 1: Using iris dataset
 data(iris)
