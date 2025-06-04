@@ -12,6 +12,10 @@
 #' # Also works with unquoted names (non-standard evaluation)
 #' libraryR(dplyr)
 #'
+#' # Package names can also be stored in a vector
+#' pkgs <- c("ggplot2", "dplyr")
+#' libraryR(pkgs)
+#'
 #' @export
 libraryR = function(pkg) {
   if (!requireNamespace("cli", quietly = TRUE)) install.packages("cli", quiet = TRUE)
