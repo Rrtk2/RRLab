@@ -24,6 +24,9 @@ libraryR(c("limma","Non_existing_package", "dplyr", "BiocManager"))
 
 # Also works with unquoted names (non-standard evaluation)
 libraryR(dplyr)
+
+# Calling it on the package itself triggers a fun easter egg
+libraryR("RRLab")
 ```
 
 [ ![Typical output with example](/docs/Functions/example_libraryR.png)](/docs/Functions/example_libraryR.png)

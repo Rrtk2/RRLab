@@ -1,5 +1,6 @@
 
 check_rrlab_update <- function() {
+
   local_sha <- utils::packageDescription("RRLab")$GithubSHA1
 
   if (is.null(local_sha) || is.na(local_sha))
@@ -18,6 +19,7 @@ check_rrlab_update <- function() {
   }
 
   invisible(TRUE)
+
 }
 
 .onAttach <- function(libname, pkgname) {
