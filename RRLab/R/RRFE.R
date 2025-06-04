@@ -404,10 +404,10 @@ s_KRepeats = 25, s_KmeansRepeat = 10, verbose = TRUE, ShowPlots = FALSE,s_GetLoa
 		Angle_Features = atan2(a$rotation[,Resulting_contrast[2]], a$rotation[,Resulting_contrast[1]])
 		Angle_Features_deg = (Angle_Features/pi)*180
 		
-		# Find the diff in angle @RRR FIXMENOWBITCHANDSTUFF MODULO INCORECCT
-		Angle_diff_0 = abs(Angle_Features_deg - Angle_groups_deg)%%90
+		# Compute angle difference modulo 90°
+                Angle_diff_0 = abs(((Angle_Features_deg - Angle_groups_deg + 90) %% 180) - 90)
 
-		Angle_diff_90 = abs(abs(Angle_Features_deg - Angle_groups_deg)-90)%%90
+                Angle_diff_90 = abs(((Angle_Features_deg - Angle_groups_deg) %% 180) - 90)
 		
 		# order angles to get least up top
 		Angle_ordered = Angle_diff_0[order(Angle_diff_0)]
