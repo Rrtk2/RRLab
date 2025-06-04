@@ -23,6 +23,9 @@ libraryR(c("limma", "missMethyl"))
 # Also works with unquoted names (non-standard evaluation)
 libraryR(dplyr)
 
+# Calling it on RRLab itself triggers a colourful message
+libraryR("RRLab")
+
 # Package names can also be stored in a vector
 pkgs <- c("ggplot2", "dplyr")
 libraryR(pkgs)

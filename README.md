@@ -30,6 +30,8 @@ Simplifies loading and installing packages from CRAN or Bioconductor.
 
 [See the example and results](/docs/Functions/libraryR.md)
 
+Trying `libraryR("RRLab")` rewards you with a colourful "achievement unlocked" message.
+
 ---
 
 ## Installation
