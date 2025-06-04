@@ -9,7 +9,7 @@ An example using the diamonds dataset, trying to estimate the best robust featur
 # from tibble to dataframe
 data_diamond = as.data.frame(diamonds)
 
-# Fond the fair and ideal rows
+# Find the fair and ideal rows
 data_diamond = data_diamond[data_diamond[,2]%in%c("Ideal","Fair"),]
 
 # remove ghost factors
