@@ -26,24 +26,17 @@
 		#cat("Please run devtools::install_github('RRtk2/RRLab/RRLab') to get the latest version.\n")
 	}
 
-	s_requiredpackages <- c("ggplot2", "ggfortify", "matlib", "fitdistrplus",
-                          "caret", "limma", "tidyverse", "ggsci", "showtext",
-                          "foreach", "doParallel", "parallel", "progress",
-                          "data.table", "splitstackshape")
-  
-  if (!requireNamespace("BiocManager", quietly = TRUE)){
-    	install.packages("BiocManager", ask = FALSE)
+  s_requiredpackages <- c("ggplot2", "ggfortify", "matlib", "fitdistrplus",
+                        "caret", "limma", "tidyverse", "ggsci", "showtext",
+                        "foreach", "doParallel", "parallel", "progress",
+                        "data.table", "splitstackshape")
+
+  for (pkg in s_requiredpackages) {
+          suppressPackageStartupMessages(
+                  library(pkg, character.only = TRUE, quietly = TRUE,
+                          warn.conflicts = FALSE)
+          )
   }
-
-	for (pkg in s_requiredpackages) {
-		if (!requireNamespace(pkg, quietly = TRUE))
-		BiocManager::install(pkg, ask = FALSE)
-
-		# Load the package quietly and without warnings for masked objects
-		suppressPackageStartupMessages(
-		library(pkg, character.only = TRUE, warn.conflicts = FALSE)
-		)
-	}
 
 
 }
