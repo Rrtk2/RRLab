@@ -30,3 +30,30 @@
 
 [OutlierCheck](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/OutlierCheck.md)
 
+[GetGenesFromCpGs](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/GetGenesFromCpGs.md)
+
+[RRFilt](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/RRFilt.md)
+
+[RRPCAplot](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/RRPCAplot.md)
+
+[PCAproject](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/PCAproject.md)
+
+[ProjectTimePCA](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/ProjectTimePCA.md)
+
+[RMostContibutingFeatures](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/RMostContibutingFeatures.md)
+
+[RRFEDataset](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/RRFEDataset.md)
+
+[RRFEDefaults](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/RRFEDefaults.md)
+
+[RRFE_svm](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/RRFE_svm.md)
+
+[RRRemoveCor](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/RRRemoveCor.md)
+
+[RRZnorm](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/RRZnorm.md)
+
+[RRlda](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/RRlda.md)
+
+[RRmatch](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/RRmatch.md)
+
+[median2](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/median2.md)
