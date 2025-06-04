@@ -22,11 +22,7 @@
 Idiogram = function(data_points, s_barwidth = 0.4, s_size_line = 1, s_alpha_lines = 0.33, s_offset = 0.1, s_size_point = 2, pvalues = NA) {
 
     # libs
-    require(ggplot2)
-    require(scales)
-    require(regioneR)
-    require(data.table)
-    require(ggnewscale)
+    RRLab::libraryR(c("ggplot2", "scales", "regioneR", "data.table", "ggnewscale"))
 
     # chcek if output from GetGenesFromCpGs()
      if("GetGenesFromCpGs"%in%class(data_points)){

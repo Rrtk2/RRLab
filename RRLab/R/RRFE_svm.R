@@ -34,10 +34,7 @@ s_KRepeats = 25, s_KmeansRepeat = 10, verbose = TRUE, ShowPlots = FALSE,s_GetLoa
 # devtools::load_all("D:\\Github\\PhD_Thesis\\Packages\\RRLab")
 # devtools::document("D:\\Github\\PhD_Thesis\\Packages\\RRLab")
 #	
-library(caret)
-library(data.table)
-library(doParallel)
-library(ggfortify)
+RRLab::libraryR(c("caret", "data.table", "doParallel", "ggfortify"))
 s_tuneLength = 1
 s_partitionlength = 0.8
 s_number = 2

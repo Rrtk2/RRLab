@@ -77,9 +77,9 @@ s_n_reps = min(25,max(floor(sqrt(dim(dataset)[2])),10)), s_n_features = max(10,f
 
 	# i have no idea how data.table does its operations using syntax with "." (like a[, .(mean = mean(V1))])
 	# But its absolutely essential its loaded. so seeting a check to get datatable (i know this is undesired but please show me how elsewise)
-	if (!"data.table" %in% .packages(all.available = TRUE)) {
-  		library("data.table")
-	}
+        if (!"data.table" %in% .packages(all.available = TRUE)) {
+                RRLab::libraryR("data.table")
+        }
 	
 	# start timer
 	t0 = Sys.time()
