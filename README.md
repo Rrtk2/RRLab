@@ -23,7 +23,12 @@ This algorithm randomly resamples the original dataset using only 80% of all sam
 #### RR general characteristics of data scan (RRscan)
 This function will evaluate all distribution properties per feature and per sample. Also detects potential outliers based on hclust, mean+sd, var+sd(var).
 
-[See the example and results](/docs/Functions/RRscan.md) 
+[See the example and results](/docs/Functions/RRscan.md)
+
+#### Automatic package loader (libraryR)
+Simplifies loading and installing packages from CRAN or Bioconductor.
+
+[See the example and results](/docs/Functions/libraryR.md)
 
 ---
 
