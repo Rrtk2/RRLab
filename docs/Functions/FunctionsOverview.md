@@ -57,3 +57,7 @@
 [RRmatch](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/RRmatch.md)
 
 [median2](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/median2.md)
+
+[Rload](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/Rload.md)
+
+[Rsave](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/Rsave.md)
