@@ -57,3 +57,6 @@ RRLab is released under the [License](LICENSE.md).
 
 **Authors:**
 - **RRtK2** – Owner and primary contributor (see [AUTHORS.md](AUTHORS.md) for complete details)
+
+For a summary of changes in each release, see [NEWS.md](NEWS.md).
+If you use RRLab in your research, please review the guidance in the [CITATION](CITATION) file.

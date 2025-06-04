@@ -1,0 +1,12 @@
+citHeader("To cite RRLab in publications use:")
+
+citEntry(
+  entry = "Manual",
+  title = "RRLab: Rick Reijnders's Miscellaneous Functions",
+  author = person("Rick", "Reijnders", email = "Rick.Reijnders@home.nl", role = c("aut", "cre")),
+  year = "2025",
+  note = "R package version 0.0.0.1000",
+  url = "https://github.com/Rrtk2/RRLab"
+)
+
+citFooter("For BibTeX entry, use citation('RRLab')")
