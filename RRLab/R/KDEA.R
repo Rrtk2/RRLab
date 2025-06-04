@@ -56,7 +56,7 @@
 #' Example using transcriptiomic data
 #'
 #' Get data from mixOmics
-#' library(mixOmics)
+#' RRLab::libraryR(mixOmics)
 #' data(stemcells)
 #'
 #' KDEA(dataset = data.frame((stemcells$gene),Class = stemcells$celltype), f_dataset_class_column_id = stemcells$celltype,s_CovOfImportance = 1 , s_CovFormula = "~ Class")

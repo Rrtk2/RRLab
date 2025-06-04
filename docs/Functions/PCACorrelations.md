@@ -55,7 +55,7 @@ Below is an example script that runs the entire workflow:
 
 ```R
 # Load necessary package
-library(ggplot2)
+RRLab::libraryR(ggplot2)
 
 # 1. Generate simulated data
 simulated_data <- generateRealisticBetaData(
