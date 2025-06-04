@@ -1,7 +1,12 @@
 #' MakePCACorrelates
 #'
-#' @usage
-#' This function performs Principal Component Analysis (PCA) on a numeric data matrix (Beta) and evaluates its relationship with phenotypic variables provided in a data frame (pheno). It generates a scree plot to visualize variance distribution, computes the correlations between significant principal components and phenotypic variables, and produces individual as well as pairwise PC plots when appropriate.
+#' @description
+#' Performs a Principal Component Analysis (PCA) on a numeric data matrix
+#' (\code{Beta}) and evaluates its relationship with phenotypic variables
+#' provided in a data frame (\code{pheno}). It generates a scree plot to
+#' visualise the variance distribution, computes correlations between the
+#' significant principal components and the phenotypic variables and, when
+#' relevant, produces individual and pairwise PC plots.
 #'
 #' @param Beta A numeric matrix where columns correspond to samples and rows to features. If not already a matrix, it will be coerced into one.
 #' @param pheno A data frame containing phenotypic data, with rows corresponding to samples and columns to phenotypic variables.
