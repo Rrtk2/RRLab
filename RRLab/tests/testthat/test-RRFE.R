@@ -7,4 +7,3 @@ test_that("RRFE runs on iris subset", {
                  s_MaxComponents = 2, s_KRepeats = 1,
                  s_KmeansRepeat = 1, ShowPlots = FALSE, verbose = FALSE)
   expect_type(result, "list")
-})

@@ -33,6 +33,11 @@ First, you need to install the devtools package. You can do this from CRAN.
 install.packages("devtools")
 ```
 
+RRLab relies on several other packages. Make sure these are installed:
+`ggplot2`, `ggfortify`, `matlib`, `fitdistrplus`, `caret`, `limma`,
+`tidyverse`, `ggsci`, `showtext`, `foreach`, `doParallel`, `parallel`,
+`progress`, `data.table`, and `splitstackshape`.
+
 To install the RRLab package
 ```
 devtools::install_github("Rrtk2/RRLab/RRLab")
@@ -52,3 +57,6 @@ RRLab is released under the [License](LICENSE.md).
 
 **Authors:**
 - **RRtK2** – Owner and primary contributor (see [AUTHORS.md](AUTHORS.md) for complete details)
+
+For a summary of changes in each release, see [NEWS.md](NEWS.md).
+If you use RRLab in your research, please review the guidance in the [CITATION](CITATION) file.
