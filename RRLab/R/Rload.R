@@ -26,7 +26,10 @@
 #' @export
 Rload <- function(name, prefix = "", postfix = "", file_location = NULL,
                   envir = parent.frame(), ...) {
-  name_expr <- substitute(name)
+
+  if(!exists(substitute(name), envir = envir )) {
+      name <- as.character(substitute(name))
+  }
 
   if (is.null(file_location)) {
     if (exists("s_saveloc_qc", inherits = TRUE)) {
@@ -36,15 +39,14 @@ Rload <- function(name, prefix = "", postfix = "", file_location = NULL,
     }
   }
 
-  if (is.character(name)) {
-    base <- name
-  } else {
-    base <- deparse(name_expr)
-    pre <- if (nzchar(prefix)) paste0(prefix, "_") else ""
-    post <- if (nzchar(postfix)) paste0("_", postfix) else ""
-    base <- paste0(pre, base, post)
-  }
 
-  file_path <- file.path(file_location, paste0(base, ".qs"))
+
+  base <- as.character(substitute(name))
+  pre <- if (nzchar(prefix)) paste0(prefix, "_") else ""
+  post <- if (nzchar(postfix)) paste0("_", postfix) else ""
+  base <- paste0(pre, base, post)
+  
+
+  file_path <- paste0(file_location, paste0(base, ".qs"))
   qs::qload(file_path, env = envir, ...)
 }

@@ -20,8 +20,8 @@
 #' Rsave(a, prefix = "08A", postfix = "cohort")
 #' }
 #' @export
-Rsave <- function(object, prefix = "", postfix = "", file_location = NULL, ...) {
-  obj_expr <- substitute(object)
+Rsave <- function(object_name, prefix = "", postfix = "", file_location = NULL, ...) {
+  obj_expr <- substitute(object_name)
   obj_name <- deparse(obj_expr)
 
   if (is.null(file_location)) {
@@ -33,18 +33,19 @@ Rsave <- function(object, prefix = "", postfix = "", file_location = NULL, ...) 
   }
 
   # If a character string is provided, treat it as a variable name
-  if (is.character(object) && length(object) == 1 && !exists(obj_name, envir = parent.frame())) {
-    obj_name <- object
-    object <- get(obj_name, envir = parent.frame())
+  if (is.character(object_name) && length(object_name) == 1 && !exists(obj_name, envir = parent.frame())) {
+    obj_name <- object_name
+    object_name <- get(obj_name, envir = parent.frame())
   }
 
   pre <- if (nzchar(prefix)) paste0(prefix, "_") else ""
   post <- if (nzchar(postfix)) paste0("_", postfix) else ""
 
-  file_path <- file.path(file_location, paste0(pre, obj_name, post, ".qs"))
+  file_path <- paste0(file_location, paste0(pre, obj_name, post, ".qs"))
 
-  args <- c(setNames(list(object), obj_name), list(file = file_path), list(...))
-  do.call(qs::qsavem, args)
+  #args <- c(setNames(list(object), obj_name), list(file = file_path), list(...))
+  #do.call(qs::qsavem, args, ...)
+  qs::qsave(setNames(object = list(object_name), nm = as.character(obj_expr)), file = file_path, ...)
 
   invisible(file_path)
 }
