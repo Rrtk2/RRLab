@@ -65,7 +65,7 @@ libraryR = function(pkg) {
     cli::cli_alert_success("Loaded {.pkg {p}}{if (installed_now) ' after install' else ''}.")
 
     if (identical(p, "RRLab")) {
-      msg <- "Achievement unlocked: you loaded RRLab with libraryR!"
+      msg <- "Achievement unlocked: Super user of libraryR()!"
       color_set <- c(32, 33, 35, 36, 31, 34)
       n <- nchar(msg)
 
@@ -74,7 +74,7 @@ libraryR = function(pkg) {
         for (i in seq_len(n)) {
           letter <- substr(msg, i, i)
           cat(paste0("\033[", color_set[iter], "m", letter, "\033[0m"))
-          Sys.sleep(0.005)
+          Sys.sleep(0.001)
         }
         flush.console()
       }
