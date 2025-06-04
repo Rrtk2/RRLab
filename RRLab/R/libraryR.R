@@ -29,7 +29,7 @@ libraryR = function(pkg) {
   }
   
   pkg = substitute(pkg)
-  pkg = if (is.name(pkg)) as.character(pkg) else eval(pkg)
+  pkg = if (is.name(pkg)) as.character(pkg) else eval(pkg, parent.frame())
   
   results = setNames(logical(length(pkg)), pkg)
   
