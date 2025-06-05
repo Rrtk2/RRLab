@@ -28,8 +28,16 @@ libraryR = function(pkg) {
     invisible(capture.output(suppressMessages(suppressWarnings(try(expr, silent = TRUE))), type = "output"))
   }
   
-  pkg = substitute(pkg)
-  pkg = if (is.name(pkg)) as.character(pkg) else eval(pkg, parent.frame())
+  pkg_expr <- substitute(pkg)
+  pkg_val <- tryCatch(eval(pkg_expr, parent.frame()), error = function(e) NULL)
+
+  if (is.character(pkg_val)) {
+    pkg <- pkg_val
+  } else if (is.name(pkg_expr)) {
+    pkg <- as.character(pkg_expr)
+  } else {
+    pkg <- pkg_val
+  }
   
   results = setNames(logical(length(pkg)), pkg)
   
