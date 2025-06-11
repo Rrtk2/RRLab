@@ -6,6 +6,10 @@
 #' `RcppParallel`, allowing large interaction matrices to be generated
 #' without exhausting RAM.
 #'
+#' This function requires the `bigmemory` and `RcppParallel` packages.
+#' The outer product is computed in parallel and streamed directly to
+#' the file-backed matrix so vectors larger than memory can be processed.
+#'
 #' @param x Numeric vector. Typically a flattened matrix.
 #' @param bigmat A `bigmemory::big.matrix` object used to store the
 #'   interaction matrix on disk.
@@ -24,6 +28,7 @@
 #' )
 #' parallelOuterToBigMat(x, bm)
 #' bm[, ]
+#' all.equal(bm[, ], outer(x, x))
 #' @export
 parallelOuterToBigMat <- function(x, bigmat) {
   if (!inherits(bigmat, "big.matrix")) {

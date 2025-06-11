@@ -62,3 +62,4 @@
 [Rload](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/Rload.md)
 
 [Rsave](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/Rsave.md)
+[parallelOuterToBigMat](https://github.com/Rrtk2/RRLab/blob/master/docs/Functions/parallelOuterToBigMat.md)
