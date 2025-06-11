@@ -1,10 +1,5 @@
-library(testthat)
-
 skip_if_not_installed("cli")
 skip_if_not_installed("rlang")
-
-# Ensure libraryR function is loaded via helper.R
-
 
 test_that("libraryR loads quoted package names", {
   res <- libraryR("stats")
@@ -17,7 +12,6 @@ test_that("libraryR loads unquoted package names", {
   expect_named(res, "stats")
   expect_true(res[["stats"]])
 })
-
 
 test_that("libraryR can load multiple packages", {
   pkgs <- c("stats", "utils")
