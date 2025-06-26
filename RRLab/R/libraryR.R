@@ -73,7 +73,7 @@ libraryR = function(pkg) {
 
     cli::cli_status_clear(spinner)
     if (already_loaded) {
-      cli::cli_alert_info("{.pkg {p}} preloaded.")
+      cli::cli_alert_info(" In-use {.pkg {p}}.")
     } else {
       suppressPackageStartupMessages(library(p, character.only = TRUE))
       cli::cli_alert_success("Loaded {.pkg {p}}{if (installed_now) ' after install' else ''}.")
