@@ -15,6 +15,7 @@ Invisibly returns a named logical vector indicating success per package.
 \description{
 Attempts to load package(s). If not installed, tries CRAN then Bioconductor.
 Silently suppresses install messages. Supports both quoted and unquoted names.
+If a package is already loaded a neutral message is shown.
 }
 \examples{
 # Load multiple packages
