@@ -52,7 +52,7 @@ check_rrlab_update <- function() {
 
   s_requiredpackages <- c("ggplot2", "ggfortify", "matlib", "fitdistrplus",
                         "caret", "limma", "tidyverse", "ggsci", "showtext",
-                        "foreach", "doParallel", "parallel", "progress",
+                        "foreach", "doParallel", "progress",
                         "data.table", "splitstackshape")
 
   RRLab::libraryR(c(s_requiredpackages))
