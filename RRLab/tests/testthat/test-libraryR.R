@@ -26,3 +26,8 @@ test_that("libraryR returns FALSE for missing packages", {
   expect_named(res, pkg)
   expect_false(res[[pkg]])
 })
+
+test_that("libraryR notes already loaded packages", {
+  library(stats)
+  expect_message(libraryR(stats), "preloaded")
+})

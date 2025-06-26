@@ -5,6 +5,7 @@
 Tired of calling `install.packages()` only to discover the package lives on Bioconductor? Sick of cluttered install messages and broken workflows? `libraryR()` solves it.
 
 This convenience function automatically checks if the given package(s) are installed. If not, it attempts installation from **CRAN**, and if that fails, falls back to **Bioconductor** — all silently and without interrupting your script. It supports both quoted and unquoted inputs and gives clean, minimal console output via `cli`.
+It also politely notes when a package is already loaded.
 
 Ideal for reproducible R workflows and anyone who values automation and sanity.
 

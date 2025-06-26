@@ -2,6 +2,7 @@
 #'
 #' Attempts to load package(s). If not installed, tries CRAN then Bioconductor.
 #' Silently suppresses install messages. Supports both quoted and unquoted names.
+#' If a package is already loaded it simply notifies the user.
 #'
 #' @param pkg A single package name or a character vector of package names.
 #' @return Invisibly returns a named logical vector indicating success per package.
@@ -40,11 +41,12 @@ libraryR = function(pkg) {
   }
   
   results = setNames(logical(length(pkg)), pkg)
-  
+
   for (p in pkg) {
     installed_now = FALSE
-    
+
     spinner = cli::cli_status(paste0("Loading {.pkg ", p, "}..."))
+    already_loaded <- paste0("package:", p) %in% search()
     
     if (!suppressMessages(suppressWarnings(requireNamespace(p, quietly = TRUE)))) {
       spinner = cli::cli_status(paste0("Installing {.pkg ", p, "} from CRAN"))
@@ -59,8 +61,8 @@ libraryR = function(pkg) {
       }
       suppress_all(BiocManager::install(p, ask = FALSE, update = FALSE, quiet = TRUE))
       installed_now = TRUE
-      
-      
+
+
       if (!suppressMessages(suppressWarnings(requireNamespace(p, quietly = TRUE)))) {
         cli::cli_status_clear(spinner)
         cli::cli_alert_danger("Could not install {.pkg {p}} via CRAN or Bioconductor.")
@@ -68,9 +70,14 @@ libraryR = function(pkg) {
         next
       }
     }
-    
-    suppressPackageStartupMessages(library(p, character.only = TRUE))
-    cli::cli_alert_success("Loaded {.pkg {p}}{if (installed_now) ' after install' else ''}.")
+
+    cli::cli_status_clear(spinner)
+    if (already_loaded) {
+      cli::cli_alert_info("{.pkg {p}} preloaded.")
+    } else {
+      suppressPackageStartupMessages(library(p, character.only = TRUE))
+      cli::cli_alert_success("Loaded {.pkg {p}}{if (installed_now) ' after install' else ''}.")
+    }
 
     if (identical(p, "RRLab")) {
       msg <- "~ Achievement unlocked: Super user of libraryR()! ~"
