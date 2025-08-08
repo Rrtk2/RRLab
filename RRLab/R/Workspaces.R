@@ -44,8 +44,6 @@ set_projects_path = function(path, create = TRUE) {
 }
 
 #' Get the current RRLab projects base path
-#'
-#' @return The absolute path to the projects folder
 #' @export
 .get_projects_path = function() {
   config_file = .get_projects_config_file()
@@ -76,10 +74,6 @@ get_config = function() {
 }
 
 #' Set up a project folder structure inside the RRLab projects path
-#'
-#' @param project_name Name of the new project folder
-#' @return The full path to the created project
-#' @export
 .setup_project_structure = function(project_name) {
   base = .get_projects_path()
   project_path = fs::path(base, project_name)
@@ -123,10 +117,6 @@ get_config = function() {
 
 
 #' Set up a project folder structure inside the RRLab projects path
-#'
-#' @param project_name Name of the new project folder
-#' @return The full path to the created project
-#' @export
 .load_project_structure = function(project_name, branch = "main") {
   base = .get_projects_path()
   
@@ -153,7 +143,7 @@ get_config = function() {
 
 }
 
-
+#' @export
 .get_workspaces = function(){
 # check if the set_projects_path exists
   if (!.test_projects_config_file_available()) {
@@ -282,7 +272,7 @@ Rload <- function(name, prefix = "", postfix = "", file_location = NULL,
   qs::qload(file_path, env = envir, ...)
 }
 
-
+#' @export
 Workspace = function(project_name, branch = "main") {
 # check if the set_projects_path exists
   if (!.test_projects_config_file_available()) {
@@ -310,6 +300,7 @@ Workspace = function(project_name, branch = "main") {
 
 }
 
+#' @export
 help_workspaces = function() {
   cli::cli_h1("RRLab Projects")
   cli::cli_text("{cli::col_cyan('First time')}")
