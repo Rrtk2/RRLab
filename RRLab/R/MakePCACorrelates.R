@@ -1,41 +1,5 @@
 #' MakePCACorrelates
-#'
-#' @description
-#' Performs a Principal Component Analysis (PCA) on a numeric data matrix
-#' (\code{Beta}) and evaluates its relationship with phenotypic variables
-#' provided in a data frame (\code{pheno}). It generates a scree plot to
-#' visualise the variance distribution, computes correlations between the
-#' significant principal components and the phenotypic variables and, when
-#' relevant, produces individual and pairwise PC plots.
-#'
-#' @param Beta A numeric matrix where columns correspond to samples and rows to features. If not already a matrix, it will be coerced into one.
-#' @param pheno A data frame containing phenotypic data, with rows corresponding to samples and columns to phenotypic variables.
-#' @param output_dir Character. Directory to save output plots. Defaults to "./output/".
-#' @param savename Character. A string appended to output filenames to distinguish results. Defaults to "01".
-#' @param var_threshold Numeric. Cumulative variance threshold (e.g., 0.9 for 90%) used to determine the number of significant principal components. Defaults to 0.9.
-#' @param p_threshold Numeric. p-value threshold to consider a correlation significant. Defaults to 0.05.
-#'
-#' @return A list containing:
-#' \describe{
-#'   \item{correlation_frame}{A data frame of correlation coefficients between each significant principal component and the phenotypic variables.}
-#'   \item{detailed_correlations}{A data frame summarizing the strongest correlated phenotypic variable for each significant principal component, including the correlation value and the percentage of variance explained.}
-#'   \item{pca_result}{The PCA result object as returned by \code{prcomp}.}
-#'   \item{scree_plot_path}{Path to the saved scree plot PDF.}
-#'   \item{plots_path}{Path to the saved PDF containing individual PC versus phenotype plots.}
-#'   \item{pairwise_plots_path}{Path to the saved PDF containing pairwise PC plots (if generated), or NA otherwise.}
-#' }
-#'
-#' @examples
-#'   # Assume Beta is a numeric matrix and pheno is a data frame with matching sample rows.
-#'   result <- MakePCACorrelates(Beta, pheno, 
-#'                               output_dir = "./results/", 
-#'                               savename = "analysis1", 
-#'                               var_threshold = 0.9, 
-#'                               p_threshold = 0.05)
-#'
 #' @export
-
-
 MakePCACorrelates <- function(Beta, pheno, 
                               output_dir = "./plots/", 
                               savename = "01",
