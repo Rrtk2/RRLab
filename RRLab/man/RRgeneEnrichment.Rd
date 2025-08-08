@@ -4,35 +4,51 @@
 \alias{RRgeneEnrichment}
 \title{RRgeneEnrichment}
 \usage{
-RRgeneEnrichment(genes, organism = "org.Hs.eg.db", type = "GO",
-  pvalueCutoff = 0.05, array.type = "EPIC", ...)
+RRgeneEnrichment(
+  genes,
+  organism = "org.Hs.eg.db",
+  type = "GO",
+  pvalueCutoff = 0.05,
+  array.type = "EPIC",
+  ...
+)
 }
 \arguments{
-\item{genes}{Character vector of gene or CpG identifiers. If a majority of
-elements begin with \code{"cg"} the input is treated as CpGs.}
+\item{genes}{Character vector of gene identifiers (typically gene symbols) or
+CpG identifiers. The function treats the input as CpGs when a majority of
+values begin with \code{"cg"}.}
 
-\item{organism}{Annotation package or KEGG organism code.}
+\item{organism}{Annotation package (e.g. "org.Hs.eg.db") used for GO analysis
+or KEGG organism code.}
 
-\item{type}{Type of enrichment to perform: \code{"GO"} or \code{"KEGG"}.}
+\item{type}{Type of enrichment to run: either "GO" or "KEGG".}
 
-\item{pvalueCutoff}{Cutoff for adjusted p-value.}
-\item{array.type}{Illumina array type when supplying CpGs.}
+\item{pvalueCutoff}{P-value cutoff for significance filtering.}
 
-\item{...}{Additional arguments passed to the enrichment functions.}
+\item{array.type}{If genes are CpGs this specifies the Illumina array type
+(e.g. "EPIC" or "450K") used to look up gene annotations.}
+
+\item{...}{Additional arguments passed to `missMethyl::gometh` or
+`missMethyl::gsameth`.}
 }
 \value{
-A list with the result table, barplot, dotplot and selection information.
+A list containing the result table, barplot, dotplot and information
+  on the selected IDs.
 }
 \description{
-Convenience wrapper around \code{missMethyl} to run GO or KEGG
-pathway enrichment on a vector of genes or CpG sites.
+Convenience wrapper around missMethyl to perform GO or KEGG enrichment
+analysis for a vector of gene identifiers or CpG sites. Automatically loads
+required packages via `libraryR`, generates basic plots and returns all
+results in a list.
 }
 \examples{
 \dontrun{
-# Basic GO enrichment
 genes <- c("BRCA1", "TP53", "EGFR")
 RRgeneEnrichment(genes, organism = "org.Hs.eg.db", type = "GO")
-## CpG input
-RRgeneEnrichment(c("cg00000029", "cg00000108"), type = "GO", array.type = "EPIC")
+RRgeneEnrichment(genes, organism = "hsa", type = "KEGG")
+# CpG input
+cpgs <- c("cg00000029", "cg00000108")
+RRgeneEnrichment(cpgs, type = "GO", array.type = "EPIC")
 }
+
 }

@@ -13,7 +13,9 @@ RRFilt(x)
 An indication of 'difference' in the given vector. Higher is better diff.
 }
 \description{
-This function gives an indication how big the difference is in a numeric vector. It calculates `abs(mean(x) - median(x)) / sd(x)`, which is near zero for symmetric distributions and larger when the mean and median diverge.
+This function indicates how big the difference is in a numeric vector.
+It returns `abs(mean(x) - median(x)) / sd(x)`, which is close to zero for
+symmetric distributions and larger when the mean and median diverge.
 }
 \examples{
 apply(iris[,-5],2,RRFilt)

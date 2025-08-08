@@ -12,5 +12,5 @@ RoxygenNote: 7.3.2
 Imports: ggplot2, ggfortify, matlib, fitdistrplus, caret, limma,
         tidyverse, ggsci, showtext, foreach, doParallel,
         progress, data.table, splitstackshape, jsonlite,
-        bigmemory, RcppParallel
+        bigmemory, RcppParallel, qs
 Suggests: testthat
