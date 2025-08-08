@@ -6,12 +6,6 @@
 \usage{
 .load_project_structure(project_name, branch = "main")
 }
-\arguments{
-\item{project_name}{Name of the new project folder}
-}
-\value{
-The full path to the created project
-}
 \description{
 Set up a project folder structure inside the RRLab projects path
 }

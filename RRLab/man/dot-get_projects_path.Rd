@@ -6,9 +6,6 @@
 \usage{
 .get_projects_path()
 }
-\value{
-The absolute path to the projects folder
-}
 \description{
 Get the current RRLab projects base path
 }
